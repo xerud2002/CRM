@@ -15,6 +15,7 @@ import {
     Menu,
     X,
     ChevronRight,
+    BarChart3,
     type LucideIcon
 } from 'lucide-react';
 
@@ -81,6 +82,7 @@ const Layout = () => {
         { icon: Calendar, label: 'Assessments', to: '/assessments' },
         { icon: FileText, label: 'Quotes', to: '/quotes' },
         { icon: Phone, label: 'Calls', to: '/calls' },
+        { icon: BarChart3, label: 'Reports', to: '/reports' },
     ];
 
     return (

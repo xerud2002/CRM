@@ -1,4 +1,4 @@
-import { Mail, Send, Trash2, Archive, Inbox, Plus, Settings, Download } from 'lucide-react';
+import { Mail, Send, Trash2, Archive, Inbox, Plus, Settings, Download, Zap } from 'lucide-react';
 
 interface MailSidebarProps {
     accounts: any[];
@@ -9,6 +9,7 @@ interface MailSidebarProps {
     unreadCounts?: Record<string, number>;
     onAddAccount?: () => void;
     onImportThunderbird?: () => void;
+    onProcessEmails?: () => void;
 }
 
 export const MailSidebar = ({ 
@@ -19,7 +20,8 @@ export const MailSidebar = ({
     onSelectFolder,
     unreadCounts = {},
     onAddAccount,
-    onImportThunderbird
+    onImportThunderbird,
+    onProcessEmails
 }: MailSidebarProps) => {
     const folders = [
         { id: 'inbox', label: 'Inbox', icon: Inbox },
@@ -97,6 +99,13 @@ export const MailSidebar = ({
                 >
                     <Download size={16} />
                     Import from Thunderbird
+                </button>
+                <button 
+                    onClick={onProcessEmails}
+                    className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors font-medium"
+                >
+                    <Zap size={16} />
+                    Process to Leads
                 </button>
             </div>
 

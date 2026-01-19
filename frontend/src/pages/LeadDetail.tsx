@@ -4,6 +4,8 @@ import api from '../services/api';
 import ActivityTimeline from '../components/timeline/ActivityTimeline';
 import { ComposeModal } from '../components/email/ComposeModal';
 import { QuotesList, CreateQuoteModal } from '../components/quotes';
+import { CallLogModal } from '../components/calls/CallLogModal';
+import { SmsModal } from '../components/sms';
 import {
     ArrowLeft,
     Mail,
@@ -21,7 +23,8 @@ import {
     Save,
     X,
     Plus,
-    Receipt
+    Receipt,
+    Smartphone
 } from 'lucide-react';
 
 type JobDay = {
@@ -39,6 +42,8 @@ const LeadDetail = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [composeOpen, setComposeOpen] = useState(false);
     const [createQuoteOpen, setCreateQuoteOpen] = useState(false);
+    const [callLogOpen, setCallLogOpen] = useState(false);
+    const [smsModalOpen, setSmsModalOpen] = useState(false);
     const [accounts, setAccounts] = useState<any[]>([]);
     const [editingXeroLink, setEditingXeroLink] = useState(false);
     const [xeroLinkValue, setXeroLinkValue] = useState('');
@@ -253,8 +258,21 @@ const LeadDetail = () => {
                             <FileText size={18} />
                             <span className="hidden sm:inline">Quote</span>
                         </button>
-                        <button className="btn btn-outline" title="Call">
+                        <button 
+                            onClick={() => setCallLogOpen(true)}
+                            className="btn btn-outline flex items-center gap-2" 
+                            title="Log Call"
+                        >
                             <Phone size={18} />
+                            <span className="hidden sm:inline">Call</span>
+                        </button>
+                        <button 
+                            onClick={() => setSmsModalOpen(true)}
+                            className="btn btn-outline flex items-center gap-2" 
+                            title="Send SMS"
+                        >
+                            <Smartphone size={18} />
+                            <span className="hidden sm:inline">SMS</span>
                         </button>
                         <button className="btn btn-primary">
                             Edit Lead
@@ -657,6 +675,29 @@ const LeadDetail = () => {
                 onClose={() => setCreateQuoteOpen(false)}
                 onCreated={() => setActiveTab('quotes')}
                 lead={lead}
+            />
+
+            {/* Call Log Modal */}
+            <CallLogModal
+                isOpen={callLogOpen}
+                onClose={() => setCallLogOpen(false)}
+                leadId={id!}
+                leadName={`${lead?.firstName} ${lead?.lastName}`}
+                onCallLogged={() => {
+                    setActiveTab('activity');
+                }}
+            />
+
+            {/* SMS Modal */}
+            <SmsModal
+                isOpen={smsModalOpen}
+                onClose={() => setSmsModalOpen(false)}
+                leadId={id!}
+                phoneNumber={lead?.phone || ''}
+                leadName={`${lead?.firstName} ${lead?.lastName}`}
+                onSmsSent={() => {
+                    setActiveTab('activity');
+                }}
             />
         </div>
     );

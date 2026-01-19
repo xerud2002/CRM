@@ -11,6 +11,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { LeadsService } from './leads.service';
+import { AutoAssignmentService } from './auto-assignment.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadFilterDto } from './dto/lead-filter.dto';
@@ -23,7 +24,10 @@ interface RequestWithUser {
 @Controller('leads')
 @UseGuards(JwtAuthGuard)
 export class LeadsController {
-  constructor(private readonly leadsService: LeadsService) {}
+  constructor(
+    private readonly leadsService: LeadsService,
+    private readonly autoAssignmentService: AutoAssignmentService,
+  ) {}
 
   @Get()
   findAll(@Query() filter: LeadFilterDto) {
@@ -38,6 +42,31 @@ export class LeadsController {
   @Get('inbox/count')
   getInboxCount() {
     return this.leadsService.getInboxCount();
+  }
+
+  @Get('assignment/workload')
+  getWorkload() {
+    return this.autoAssignmentService.getStaffWorkload();
+  }
+
+  @Get('assignment/rules')
+  getAssignmentRules() {
+    return this.autoAssignmentService.getRules();
+  }
+
+  @Post('assignment/rules')
+  addAssignmentRule(@Body() rule: any) {
+    return this.autoAssignmentService.addRule(rule);
+  }
+
+  @Patch('assignment/rules/:id')
+  updateAssignmentRule(@Param('id') id: string, @Body() updates: any) {
+    return this.autoAssignmentService.updateRule(id, updates);
+  }
+
+  @Delete('assignment/rules/:id')
+  deleteAssignmentRule(@Param('id') id: string) {
+    return this.autoAssignmentService.deleteRule(id);
   }
 
   @Get(':id')
@@ -63,13 +92,25 @@ export class LeadsController {
   }
 
   @Post(':id/accept')
-  accept(@Param('id') id: string, @Request() req: RequestWithUser) {
-    return this.leadsService.accept(id, req.user?.id);
+  async accept(@Param('id') id: string, @Request() req: RequestWithUser) {
+    const lead = await this.leadsService.accept(id, req.user?.id);
+    // Auto-assign on accept
+    const assignedLead = await this.autoAssignmentService.assignLead(lead);
+    return assignedLead || lead;
   }
 
   @Post(':id/reject')
   reject(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.leadsService.reject(id, req.user?.id);
+  }
+
+  @Post(':id/assign')
+  assign(
+    @Param('id') id: string,
+    @Body('userId') userId: string,
+    @Request() req: RequestWithUser,
+  ) {
+    return this.autoAssignmentService.manualAssign(id, userId, req.user?.id);
   }
 
   @Delete(':id')

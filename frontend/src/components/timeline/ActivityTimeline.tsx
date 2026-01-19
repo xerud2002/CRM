@@ -9,11 +9,20 @@ import {
     Flag,
     Clock,
     Send,
+    Smartphone,
+    PhoneIncoming,
+    PhoneOutgoing,
+    PhoneMissed,
+    MailOpen,
+    FileText,
+    CheckCircle2,
+    XCircle,
+    AlertCircle,
 } from 'lucide-react';
 
 interface Activity {
     id: string;
-    type: 'email' | 'call' | 'note' | 'status_change' | 'milestone' | 'assessment';
+    type: 'email' | 'call' | 'note' | 'status_change' | 'milestone' | 'assessment' | 'sms' | 'quote';
     description: string;
     metadata?: Record<string, any>;
     createdAt: string;
@@ -28,12 +37,23 @@ interface ActivityTimelineProps {
     onActivityAdded?: () => void;
 }
 
-const getActivityIcon = (type: string) => {
+const getActivityIcon = (type: string, metadata?: Record<string, any>) => {
     switch (type) {
         case 'email':
+            if (metadata?.direction === 'inbound') {
+                return <MailOpen size={16} className="text-blue-500" />;
+            }
             return <Mail size={16} className="text-blue-500" />;
         case 'call':
-            return <Phone size={16} className="text-green-500" />;
+            if (metadata?.direction === 'inbound') {
+                return <PhoneIncoming size={16} className="text-green-500" />;
+            }
+            if (metadata?.outcome === 'no_answer' || metadata?.outcome === 'busy') {
+                return <PhoneMissed size={16} className="text-red-500" />;
+            }
+            return <PhoneOutgoing size={16} className="text-green-500" />;
+        case 'sms':
+            return <Smartphone size={16} className="text-indigo-500" />;
         case 'note':
             return <MessageSquare size={16} className="text-purple-500" />;
         case 'status_change':
@@ -42,17 +62,24 @@ const getActivityIcon = (type: string) => {
             return <Flag size={16} className="text-yellow-500" />;
         case 'assessment':
             return <Calendar size={16} className="text-teal-500" />;
+        case 'quote':
+            return <FileText size={16} className="text-emerald-500" />;
         default:
             return <Clock size={16} className="text-slate-400" />;
     }
 };
 
-const getActivityColor = (type: string) => {
+const getActivityColor = (type: string, metadata?: Record<string, any>) => {
     switch (type) {
         case 'email':
             return 'bg-blue-100 border-blue-200';
         case 'call':
+            if (metadata?.outcome === 'no_answer' || metadata?.outcome === 'busy') {
+                return 'bg-red-100 border-red-200';
+            }
             return 'bg-green-100 border-green-200';
+        case 'sms':
+            return 'bg-indigo-100 border-indigo-200';
         case 'note':
             return 'bg-purple-100 border-purple-200';
         case 'status_change':
@@ -61,6 +88,8 @@ const getActivityColor = (type: string) => {
             return 'bg-yellow-100 border-yellow-200';
         case 'assessment':
             return 'bg-teal-100 border-teal-200';
+        case 'quote':
+            return 'bg-emerald-100 border-emerald-200';
         default:
             return 'bg-slate-100 border-slate-200';
     }
@@ -181,8 +210,8 @@ const ActivityTimeline = ({ leadId, onActivityAdded }: ActivityTimelineProps) =>
                         {activities.map((activity) => (
                             <div key={activity.id} className="relative flex gap-3 pl-0">
                                 {/* Icon */}
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white z-10 ${getActivityColor(activity.type)}`}>
-                                    {getActivityIcon(activity.type)}
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white z-10 ${getActivityColor(activity.type, activity.metadata)}`}>
+                                    {getActivityIcon(activity.type, activity.metadata)}
                                 </div>
 
                                 {/* Content */}
@@ -193,6 +222,125 @@ const ActivityTimeline = ({ leadId, onActivityAdded }: ActivityTimelineProps) =>
                                             {formatDate(activity.createdAt)}
                                         </span>
                                     </div>
+
+                                    {/* Call Metadata */}
+                                    {activity.type === 'call' && activity.metadata && (
+                                        <div className="mt-2 pt-2 border-t border-slate-100">
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                {activity.metadata.direction && (
+                                                    <span className={`px-2 py-0.5 rounded ${
+                                                        activity.metadata.direction === 'inbound' 
+                                                            ? 'bg-blue-50 text-blue-700' 
+                                                            : 'bg-green-50 text-green-700'
+                                                    }`}>
+                                                        {activity.metadata.direction === 'inbound' ? '↓ Inbound' : '↑ Outbound'}
+                                                    </span>
+                                                )}
+                                                {activity.metadata.outcome && (
+                                                    <span className={`px-2 py-0.5 rounded ${
+                                                        activity.metadata.outcome === 'connected' ? 'bg-green-50 text-green-700' :
+                                                        activity.metadata.outcome === 'voicemail' ? 'bg-yellow-50 text-yellow-700' :
+                                                        activity.metadata.outcome === 'no_answer' ? 'bg-red-50 text-red-700' :
+                                                        activity.metadata.outcome === 'busy' ? 'bg-orange-50 text-orange-700' :
+                                                        'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        {activity.metadata.outcome === 'connected' && '✓ Connected'}
+                                                        {activity.metadata.outcome === 'voicemail' && '📞 Voicemail'}
+                                                        {activity.metadata.outcome === 'no_answer' && '✗ No Answer'}
+                                                        {activity.metadata.outcome === 'busy' && '⏳ Busy'}
+                                                        {activity.metadata.outcome === 'callback_requested' && '↩ Callback'}
+                                                    </span>
+                                                )}
+                                                {activity.metadata.duration && (
+                                                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                                                        ⏱ {activity.metadata.duration}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {activity.metadata.notes && (
+                                                <p className="mt-2 text-xs text-slate-500 italic">
+                                                    "{activity.metadata.notes}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Email Metadata */}
+                                    {activity.type === 'email' && activity.metadata && (
+                                        <div className="mt-2 pt-2 border-t border-slate-100">
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                {activity.metadata.direction && (
+                                                    <span className={`px-2 py-0.5 rounded ${
+                                                        activity.metadata.direction === 'inbound' 
+                                                            ? 'bg-blue-50 text-blue-700' 
+                                                            : 'bg-green-50 text-green-700'
+                                                    }`}>
+                                                        {activity.metadata.direction === 'inbound' ? '↓ Received' : '↑ Sent'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {activity.metadata.subject && (
+                                                <p className="mt-1 text-xs text-slate-600 font-medium">
+                                                    📧 {activity.metadata.subject}
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* SMS Metadata */}
+                                    {activity.type === 'sms' && activity.metadata && (
+                                        <div className="mt-2 pt-2 border-t border-slate-100">
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                {activity.metadata.status && (
+                                                    <span className={`px-2 py-0.5 rounded ${
+                                                        activity.metadata.status === 'delivered' ? 'bg-green-50 text-green-700' :
+                                                        activity.metadata.status === 'sent' ? 'bg-blue-50 text-blue-700' :
+                                                        activity.metadata.status === 'failed' ? 'bg-red-50 text-red-700' :
+                                                        'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        {activity.metadata.status === 'delivered' && <><CheckCircle2 size={10} className="inline mr-1" />Delivered</>}
+                                                        {activity.metadata.status === 'sent' && <><Send size={10} className="inline mr-1" />Sent</>}
+                                                        {activity.metadata.status === 'failed' && <><XCircle size={10} className="inline mr-1" />Failed</>}
+                                                        {activity.metadata.status === 'pending' && <><AlertCircle size={10} className="inline mr-1" />Pending</>}
+                                                    </span>
+                                                )}
+                                                {activity.metadata.template && (
+                                                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
+                                                        Template: {activity.metadata.template.replace(/_/g, ' ')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {activity.metadata.messagePreview && (
+                                                <p className="mt-1 text-xs text-slate-500 italic truncate">
+                                                    "{activity.metadata.messagePreview}"
+                                                </p>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Quote Metadata */}
+                                    {activity.type === 'quote' && activity.metadata && (
+                                        <div className="mt-2 pt-2 border-t border-slate-100">
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                {activity.metadata.amount && (
+                                                    <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold">
+                                                        £{Number(activity.metadata.amount).toLocaleString()}
+                                                    </span>
+                                                )}
+                                                {activity.metadata.status && (
+                                                    <span className={`px-2 py-0.5 rounded ${
+                                                        activity.metadata.status === 'accepted' ? 'bg-green-50 text-green-700' :
+                                                        activity.metadata.status === 'sent' ? 'bg-blue-50 text-blue-700' :
+                                                        activity.metadata.status === 'declined' ? 'bg-red-50 text-red-700' :
+                                                        'bg-slate-100 text-slate-600'
+                                                    }`}>
+                                                        {activity.metadata.status}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {activity.user && (
                                         <p className="text-xs text-slate-400 mt-1">
                                             by {activity.user.name}

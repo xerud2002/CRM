@@ -10,6 +10,9 @@ import { MailClientModule } from './mail-client';
 import { ActivitiesModule } from './activities';
 import { AssessmentsModule } from './assessments';
 import { QuotesModule } from './quotes';
+import { CallsModule } from './calls';
+import { ReportsModule } from './reports';
+import { SmsModule } from './sms';
 import {
   User,
   Lead,
@@ -65,6 +68,9 @@ import {
     ActivitiesModule,
     AssessmentsModule,
     QuotesModule,
+    CallsModule,
+    ReportsModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

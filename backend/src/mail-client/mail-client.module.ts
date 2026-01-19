@@ -8,14 +8,36 @@ import { TemplatesController } from './templates.controller';
 import { TemplatesService } from './templates.service';
 import { ThunderbirdImportController } from './thunderbird-import.controller';
 import { ThunderbirdImportService } from './thunderbird-import.service';
-import { EmailAccount, Email, EmailTemplate, Lead } from '../entities';
+import { EmailProcessorController } from './email-processor.controller';
+import { EmailProcessorService } from './email-processor.service';
+import { EmailParserFactory } from '../emails/parsers';
+import { EmailAccount, Email, EmailTemplate, Lead, Activity } from '../entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EmailAccount, Email, EmailTemplate, Lead]),
+    TypeOrmModule.forFeature([EmailAccount, Email, EmailTemplate, Lead, Activity]),
   ],
-  controllers: [MailClientController, TemplatesController, ThunderbirdImportController],
-  providers: [MailClientService, ImapService, SmtpService, TemplatesService, ThunderbirdImportService],
-  exports: [MailClientService, ImapService, TemplatesService, ThunderbirdImportService],
+  controllers: [
+    MailClientController,
+    TemplatesController,
+    ThunderbirdImportController,
+    EmailProcessorController,
+  ],
+  providers: [
+    MailClientService,
+    ImapService,
+    SmtpService,
+    TemplatesService,
+    ThunderbirdImportService,
+    EmailProcessorService,
+    EmailParserFactory,
+  ],
+  exports: [
+    MailClientService,
+    ImapService,
+    TemplatesService,
+    ThunderbirdImportService,
+    EmailProcessorService,
+  ],
 })
 export class MailClientModule {}

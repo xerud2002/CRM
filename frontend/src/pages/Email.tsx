@@ -5,6 +5,7 @@ import { MailList } from '../components/email/MailList';
 import { MailDetail } from '../components/email/MailDetail';
 import { ComposeModal } from '../components/email/ComposeModal';
 import { ThunderbirdImport } from '../components/email/ThunderbirdImport';
+import { EmailProcessor } from '../components/email/EmailProcessor';
 import { RefreshCw, Bell, BellOff } from 'lucide-react';
 
 const Email = () => {
@@ -20,6 +21,7 @@ const Email = () => {
     const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [showThunderbirdImport, setShowThunderbirdImport] = useState(false);
+    const [showEmailProcessor, setShowEmailProcessor] = useState(false);
     const [lastEmailCount, setLastEmailCount] = useState<Record<string, number>>({});
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -250,6 +252,7 @@ const Email = () => {
                     onSelectFolder={setActiveFolder}
                     unreadCounts={unreadCounts}
                     onImportThunderbird={() => setShowThunderbirdImport(true)}
+                    onProcessEmails={() => setShowEmailProcessor(true)}
                 />
 
                 {/* List (if account selected) */}
@@ -290,6 +293,19 @@ const Email = () => {
                     onSuccess={() => {
                         setShowThunderbirdImport(false);
                         fetchAccounts();
+                    }}
+                />
+            )}
+
+            {/* Email Processor Modal */}
+            {showEmailProcessor && (
+                <EmailProcessor 
+                    onClose={() => setShowEmailProcessor(false)}
+                    onSuccess={() => {
+                        // Refresh data after processing
+                        if (selectedAccount) {
+                            fetchEmails(selectedAccount, activeFolder);
+                        }
                     }}
                 />
             )}
