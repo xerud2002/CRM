@@ -15,6 +15,11 @@ export interface TemplateVariables {
   move_date?: string;
   bedrooms?: string;
   quote_amount?: string;
+  quote_link?: string;
+  invoice_link?: string;
+  service_type?: string;
+  start_time?: string;
+  job_schedule?: string;
   assessment_date?: string;
   assessment_time?: string;
   assessment_method?: string;
@@ -118,6 +123,12 @@ export class TemplatesService {
       to_postcode: lead.toPostcode || '',
       move_date: moveDate,
       bedrooms: lead.bedrooms?.toString() || '',
+      quote_amount: lead.quoteAmount ? `£${Number(lead.quoteAmount).toFixed(2)}` : '',
+      quote_link: lead.xeroQuoteLink || '',
+      invoice_link: lead.xeroInvoiceLink || '',
+      service_type: lead.serviceType || 'Removal Service',
+      start_time: lead.startTime || '8:00 AM - 9:00 AM',
+      job_schedule: this.formatJobSchedule(lead.jobDays),
       staff_name: staffInfo?.name || 'Holdem Removals Team',
       staff_phone: staffInfo?.phone || '01234 567890',
       staff_email: staffInfo?.email || 'office@holdemremovals.co.uk',
@@ -149,6 +160,37 @@ export class TemplatesService {
   }
 
   /**
+   * Format job days into readable schedule
+   */
+  private formatJobSchedule(jobDays?: { day: number; date: Date; type: string; startTime?: string }[]): string {
+    if (!jobDays || jobDays.length === 0) {
+      return '';
+    }
+
+    const typeLabels: Record<string, string> = {
+      packing: 'Packing Day',
+      loading: 'Loading Day',
+      moving: 'Moving Day',
+      unloading: 'Unloading Day',
+    };
+
+    return jobDays
+      .sort((a, b) => a.day - b.day)
+      .map((jd) => {
+        const date = new Date(jd.date).toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        });
+        const label = typeLabels[jd.type] || jd.type;
+        const time = jd.startTime || '8:00 AM';
+        return `<strong>Day ${jd.day} - ${label}:</strong> ${date} (Start: ${time})`;
+      })
+      .join('<br>');
+  }
+
+  /**
    * Get list of available variables for documentation
    */
   getAvailableVariables(): { name: string; description: string }[] {
@@ -164,6 +206,11 @@ export class TemplatesService {
       { name: 'move_date', description: 'Moving date' },
       { name: 'bedrooms', description: 'Number of bedrooms' },
       { name: 'quote_amount', description: 'Quote amount (£)' },
+      { name: 'quote_link', description: 'Xero quote link' },
+      { name: 'invoice_link', description: 'Xero invoice link' },
+      { name: 'service_type', description: 'Service type (e.g., Packing & Moving)' },
+      { name: 'start_time', description: 'Arrival/start time' },
+      { name: 'job_schedule', description: 'Multi-day job schedule (packing, loading, moving, unloading)' },
       { name: 'assessment_date', description: 'Assessment/survey date' },
       { name: 'assessment_time', description: 'Assessment/survey time' },
       {

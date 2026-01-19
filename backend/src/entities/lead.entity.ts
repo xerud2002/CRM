@@ -150,6 +150,21 @@ export class Lead {
   @Column({ default: false })
   quoteAccepted: boolean;
 
+  @Column({ name: 'xero_quote_link', nullable: true })
+  xeroQuoteLink: string;
+
+  @Column({ name: 'xero_invoice_link', nullable: true })
+  xeroInvoiceLink: string;
+
+  @Column({ name: 'service_type', nullable: true })
+  serviceType: string;
+
+  @Column({ name: 'start_time', nullable: true })
+  startTime: string;
+
+  @Column({ name: 'job_days', type: 'jsonb', nullable: true })
+  jobDays: { day: number; date: Date; type: 'packing' | 'loading' | 'moving' | 'unloading'; startTime?: string }[];
+
   @Column({ nullable: true })
   lastContactAt: Date;
 

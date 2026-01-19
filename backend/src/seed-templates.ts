@@ -134,10 +134,10 @@ Thank you for allowing us to survey your property. Based on our assessment, we a
 📅 Preferred Date: {{move_date}}
 🏠 Property Size: {{bedrooms}} bedrooms
 
-<strong>Quote Summary:</strong>
-💷 <strong>Total: £{{quote_amount}}</strong>
+<strong>Your Quote:</strong>
+💷 <a href="{{quote_link}}" style="color: #2563eb; font-weight: bold;">Click here to view your detailed quote</a>
 
-<strong>This includes:</strong>
+<strong>What's included:</strong>
 • Professional removal team
 • Fully equipped removal vehicle(s)
 • Furniture blankets and protection
@@ -165,7 +165,7 @@ Holdem Removals`,
       'to_postcode',
       'move_date',
       'bedrooms',
-      'quote_amount',
+      'quote_link',
       'staff_name',
       'staff_phone',
     ],
@@ -260,21 +260,27 @@ Holdem Removals
   {
     name: 'Booking Confirmation',
     category: 'Booking',
-    subject: 'Booking Confirmed - Moving Day {{move_date}}',
+    subject: 'Booking Confirmed - {{service_type}} on {{move_date}}',
     body: `Dear {{first_name}},
 
-Great news! Your removal has been confirmed. Here are the details:
+Great news! Your booking has been confirmed. Here are the details:
 
-<strong>📅 Moving Date: {{move_date}}</strong>
+<strong>📋 Service: {{service_type}}</strong>
+<strong>⏰ Arrival Time: {{start_time}}</strong>
+
+{{job_schedule}}
 
 <strong>Collection Address:</strong>
-{{from_address}}, {{from_postcode}}
+📍 {{from_address}}, {{from_postcode}}
 
 <strong>Delivery Address:</strong>
-{{to_address}}, {{to_postcode}}
+📍 {{to_address}}, {{to_postcode}}
+
+<strong>💷 Invoice:</strong>
+<a href="{{invoice_link}}" style="color: #2563eb; font-weight: bold;">Click here to view your invoice</a>
 
 <strong>What happens next:</strong>
-• Our team will arrive between 8:00 AM - 9:00 AM
+• Our team will arrive at the scheduled time
 • Please ensure all items are packed and ready (unless packing service booked)
 • Ensure clear access at both properties
 • Keep valuables and important documents with you
@@ -295,11 +301,15 @@ Best regards,
 Holdem Removals`,
     variables: [
       'first_name',
+      'service_type',
+      'start_time',
+      'job_schedule',
       'move_date',
       'from_address',
       'from_postcode',
       'to_address',
       'to_postcode',
+      'invoice_link',
       'staff_name',
       'staff_phone',
     ],

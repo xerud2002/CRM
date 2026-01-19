@@ -9,6 +9,7 @@ import { DashboardModule } from './dashboard';
 import { MailClientModule } from './mail-client';
 import { ActivitiesModule } from './activities';
 import { AssessmentsModule } from './assessments';
+import { QuotesModule } from './quotes';
 import {
   User,
   Lead,
@@ -18,6 +19,8 @@ import {
   EmailAccount,
   Call,
   Assessment,
+  Quote,
+  QuoteLineItem,
 } from './entities';
 
 @Module({
@@ -48,6 +51,8 @@ import {
           EmailAccount,
           Call,
           Assessment,
+          Quote,
+          QuoteLineItem,
         ],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
@@ -59,6 +64,7 @@ import {
     MailClientModule,
     ActivitiesModule,
     AssessmentsModule,
+    QuotesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

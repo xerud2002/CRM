@@ -6,3 +6,4 @@ export * from './email-template.entity';
 export * from './email-account.entity';
 export * from './call.entity';
 export * from './assessment.entity';
+export * from './quote.entity';
