@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../../services/api';
 import {
     Mail,
-    Phone,
     MessageSquare,
     ArrowRightLeft,
     Calendar,
@@ -20,11 +19,23 @@ import {
     AlertCircle,
 } from 'lucide-react';
 
+interface ActivityMetadata {
+    direction?: 'inbound' | 'outbound';
+    outcome?: 'connected' | 'voicemail' | 'no_answer' | 'busy' | 'callback_requested';
+    duration?: string;
+    notes?: string;
+    subject?: string;
+    status?: 'delivered' | 'sent' | 'failed' | 'pending' | 'accepted' | 'declined';
+    template?: string;
+    messagePreview?: string;
+    amount?: number;
+}
+
 interface Activity {
     id: string;
     type: 'email' | 'call' | 'note' | 'status_change' | 'milestone' | 'assessment' | 'sms' | 'quote';
     description: string;
-    metadata?: Record<string, any>;
+    metadata?: ActivityMetadata;
     createdAt: string;
     user?: {
         id: string;
@@ -37,7 +48,7 @@ interface ActivityTimelineProps {
     onActivityAdded?: () => void;
 }
 
-const getActivityIcon = (type: string, metadata?: Record<string, any>) => {
+const getActivityIcon = (type: string, metadata?: ActivityMetadata) => {
     switch (type) {
         case 'email':
             if (metadata?.direction === 'inbound') {
@@ -69,7 +80,7 @@ const getActivityIcon = (type: string, metadata?: Record<string, any>) => {
     }
 };
 
-const getActivityColor = (type: string, metadata?: Record<string, any>) => {
+const getActivityColor = (type: string, metadata?: ActivityMetadata) => {
     switch (type) {
         case 'email':
             return 'bg-blue-100 border-blue-200';
@@ -121,7 +132,7 @@ const ActivityTimeline = ({ leadId, onActivityAdded }: ActivityTimelineProps) =>
     const [noteText, setNoteText] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
-    const fetchActivities = async () => {
+    const fetchActivities = useCallback(async () => {
         try {
             const response = await api.get(`/leads/${leadId}/activities`);
             setActivities(response.data);
@@ -130,13 +141,13 @@ const ActivityTimeline = ({ leadId, onActivityAdded }: ActivityTimelineProps) =>
         } finally {
             setLoading(false);
         }
-    };
+    }, [leadId]);
 
     useEffect(() => {
         if (leadId) {
-            fetchActivities();
+            void fetchActivities();
         }
-    }, [leadId]);
+    }, [leadId, fetchActivities]);
 
     const handleAddNote = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -148,7 +159,7 @@ const ActivityTimeline = ({ leadId, onActivityAdded }: ActivityTimelineProps) =>
                 description: noteText.trim(),
             });
             setNoteText('');
-            fetchActivities();
+            void fetchActivities();
             onActivityAdded?.();
         } catch (error) {
             console.error('Failed to add note', error);

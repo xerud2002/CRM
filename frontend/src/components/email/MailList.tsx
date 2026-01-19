@@ -1,6 +1,14 @@
 import { Search } from 'lucide-react';
+import type { Email } from '../../types';
 
-export const MailList = ({ emails, selectedEmailId, onSelectEmail, loading }: any) => {
+interface MailListProps {
+    emails: Email[];
+    selectedEmailId: string | null;
+    onSelectEmail: (email: Email) => void;
+    loading: boolean;
+}
+
+export const MailList = ({ emails, selectedEmailId, onSelectEmail, loading }: MailListProps) => {
     if (loading) {
         return (
             <div className="flex-1 flex items-center justify-center bg-white">
@@ -31,7 +39,7 @@ export const MailList = ({ emails, selectedEmailId, onSelectEmail, loading }: an
                     {emails.length === 0 ? (
                         <li className="p-4 text-center text-slate-500 text-sm">No emails found.</li>
                     ) : (
-                        emails.map((email: any) => (
+                        emails.map((email) => (
                             <li
                                 key={email.id}
                                 onClick={() => onSelectEmail(email)}

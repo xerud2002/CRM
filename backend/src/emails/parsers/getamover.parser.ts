@@ -40,41 +40,55 @@ export class GetAMoverParser extends BaseEmailParser {
       // Extract phone - look for various patterns
       const phoneMatch = text.match(/(?:telephone|phone|tel)[:\s]*([^<\n]+)/i);
       if (phoneMatch) {
-        lead.phone = this.extractPhone(phoneMatch[1]) || phoneMatch[1].trim().replace(/[^0-9+]/g, '');
+        lead.phone =
+          this.extractPhone(phoneMatch[1]) ||
+          phoneMatch[1].trim().replace(/[^0-9+]/g, '');
       } else {
         lead.phone = this.extractPhone(text);
       }
 
       // Extract name from table format: <td>Name:</td><td>John Smith</td>
-      const nameTableMatch = text.match(/<td[^>]*>\s*Name:?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i);
+      const nameTableMatch = text.match(
+        /<td[^>]*>\s*Name:?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i,
+      );
       if (nameTableMatch && !lead.firstName) {
-        const { firstName, lastName } = this.splitName(nameTableMatch[1].trim());
+        const { firstName, lastName } = this.splitName(
+          nameTableMatch[1].trim(),
+        );
         lead.firstName = firstName;
         lead.lastName = lastName;
       }
 
       // Extract from address from table
-      const fromAddressMatch = text.match(/<td[^>]*>\s*(?:From\s*Address|Moving\s*From):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i);
+      const fromAddressMatch = text.match(
+        /<td[^>]*>\s*(?:From\s*Address|Moving\s*From):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i,
+      );
       if (fromAddressMatch) {
         lead.fromAddress = fromAddressMatch[1].trim();
         lead.fromPostcode = this.extractPostcode(lead.fromAddress);
       }
 
       // Extract to address from table
-      const toAddressMatch = text.match(/<td[^>]*>\s*(?:To\s*Address|Moving\s*To):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i);
+      const toAddressMatch = text.match(
+        /<td[^>]*>\s*(?:To\s*Address|Moving\s*To):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i,
+      );
       if (toAddressMatch) {
         lead.toAddress = toAddressMatch[1].trim();
         lead.toPostcode = this.extractPostcode(lead.toAddress);
       }
 
       // Extract move date from table
-      const dateTableMatch = text.match(/<td[^>]*>\s*(?:Moving\s*Date|Date):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i);
+      const dateTableMatch = text.match(
+        /<td[^>]*>\s*(?:Moving\s*Date|Date):?\s*<\/td>\s*<td[^>]*>\s*([^<]+)/i,
+      );
       if (dateTableMatch) {
         lead.moveDate = this.parseDate(dateTableMatch[1]);
       }
 
       // Extract bedrooms from table
-      const bedroomTableMatch = text.match(/<td[^>]*>\s*Bedrooms?:?\s*<\/td>\s*<td[^>]*>\s*(\d+)/i);
+      const bedroomTableMatch = text.match(
+        /<td[^>]*>\s*Bedrooms?:?\s*<\/td>\s*<td[^>]*>\s*(\d+)/i,
+      );
       if (bedroomTableMatch) {
         lead.bedrooms = parseInt(bedroomTableMatch[1], 10);
       }
@@ -103,7 +117,9 @@ export class GetAMoverParser extends BaseEmailParser {
 
       // Fallback: Moving from section (non-table format)
       if (!lead.fromAddress) {
-        const fromSection = text.match(/moving\s*from[\s\S]*?(?=moving\s*to|$)/i);
+        const fromSection = text.match(
+          /moving\s*from[\s\S]*?(?=moving\s*to|$)/i,
+        );
         if (fromSection) {
           const fromText = fromSection[0];
           lead.fromPostcode = this.extractPostcode(fromText);

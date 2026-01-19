@@ -1,4 +1,5 @@
-import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useState, useContext, type ReactNode } from 'react';
 
 interface User {
     id: string;
@@ -18,21 +19,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<User | null>(null);
-    const [token, setToken] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+// Initialize from localStorage synchronously
+const getInitialToken = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token');
+};
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
+const getInitialUser = (): User | null => {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem('user');
+    if (stored) {
+        try {
+            return JSON.parse(stored) as User;
+        } catch {
+            return null;
         }
-        setIsLoading(false);
-    }, []);
+    }
+    return null;
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [user, setUser] = useState<User | null>(getInitialUser);
+    const [token, setToken] = useState<string | null>(getInitialToken);
+    const [isLoading] = useState(false);
 
     const login = (newToken: string, newUser: User) => {
         localStorage.setItem('token', newToken);

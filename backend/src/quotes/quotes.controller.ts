@@ -86,7 +86,7 @@ export class QuotesController {
   @Get(':id/pdf')
   async generatePdf(@Param('id') id: string, @Res() res: Response) {
     const quote = await this.quotesService.findOne(id);
-    const pdfBuffer = await this.pdfService.generateQuotePdf(quote);
+    const pdfBuffer = this.pdfService.generateQuotePdf(quote);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -100,7 +100,7 @@ export class QuotesController {
   @Get(':id/pdf/preview')
   async previewPdf(@Param('id') id: string, @Res() res: Response) {
     const quote = await this.quotesService.findOne(id);
-    const pdfBuffer = await this.pdfService.generateQuotePdf(quote);
+    const pdfBuffer = this.pdfService.generateQuotePdf(quote);
 
     res.set({
       'Content-Type': 'application/pdf',

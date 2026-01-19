@@ -6,6 +6,7 @@ import {
   QuoteLineItem,
   QuoteStatus,
   Lead,
+  LeadStatus,
   ActivityType,
   Activity,
 } from '../entities';
@@ -294,7 +295,9 @@ export class QuotesService {
     await this.quoteRepository.save(quote);
 
     // Update lead status to proposal accepted
-    await this.leadRepository.update(quote.leadId, { status: 'won' as any });
+    await this.leadRepository.update(quote.leadId, {
+      status: LeadStatus.WON,
+    });
 
     // Log activity
     await this.activityRepository.save({

@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsUUID, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsUUID,
+  IsEnum,
+} from 'class-validator';
 
 export enum SmsTemplate {
   APPOINTMENT_REMINDER = 'appointment_reminder',
@@ -19,6 +25,10 @@ export class SendSmsDto {
   @IsOptional()
   @IsEnum(SmsTemplate)
   template?: SmsTemplate;
+
+  @IsOptional()
+  @IsString()
+  to?: string;
 }
 
 export class SmsTemplateDto {

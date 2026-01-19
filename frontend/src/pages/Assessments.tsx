@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -53,7 +53,7 @@ export default function Assessments() {
     const [calendarType, setCalendarType] = useState<CalendarType>('all');
     const [currentDate, setCurrentDate] = useState(new Date());
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<string | null>(null);
+    const [selectedDate] = useState<string | null>(null);
 
     // Calculate date range based on view mode
     const dateRange = useMemo(() => {
@@ -77,14 +77,10 @@ export default function Assessments() {
         };
     }, [currentDate, viewMode]);
 
-    useEffect(() => {
-        fetchAssessments();
-    }, [dateRange, calendarType]);
-
-    const fetchAssessments = async () => {
+    const fetchAssessments = useCallback(async () => {
         try {
             setLoading(true);
-            const params: any = {
+            const params: Record<string, string> = {
                 startDate: dateRange.startDate,
                 endDate: dateRange.endDate,
             };
@@ -98,7 +94,11 @@ export default function Assessments() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [dateRange, calendarType]);
+
+    useEffect(() => {
+        void fetchAssessments();
+    }, [fetchAssessments]);
 
     const navigatePeriod = (direction: 'prev' | 'next') => {
         const newDate = new Date(currentDate);
@@ -118,7 +118,6 @@ export default function Assessments() {
     const calendarDays = useMemo(() => {
         const days: Date[] = [];
         const start = new Date(dateRange.startDate);
-        const end = new Date(dateRange.endDate);
 
         if (viewMode === 'month') {
             // Adjust to start from Monday of the first week
@@ -415,15 +414,11 @@ function CreateAssessmentModal({
         toPostcode: '',
         notes: '',
     });
-    const [leads, setLeads] = useState<any[]>([]);
+    const [leads, setLeads] = useState<{ id: string; firstName: string; lastName: string; email?: string; phone?: string; fromPostcode?: string; toPostcode?: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        searchLeads();
-    }, [searchTerm]);
-
-    const searchLeads = async () => {
+    const searchLeads = useCallback(async () => {
         try {
             const response = await api.get('/leads', {
                 params: {
@@ -436,7 +431,11 @@ function CreateAssessmentModal({
         } catch (error) {
             console.error('Failed to search leads:', error);
         }
-    };
+    }, [searchTerm]);
+
+    useEffect(() => {
+        void searchLeads();
+    }, [searchLeads]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

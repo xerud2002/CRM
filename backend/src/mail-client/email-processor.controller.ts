@@ -1,6 +1,9 @@
 import { Controller, Post, Get, Param, Body, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { EmailProcessorService, ProcessingResult } from './email-processor.service';
+import {
+  EmailProcessorService,
+  ProcessingResult,
+} from './email-processor.service';
 
 @Controller('mail/process')
 @UseGuards(JwtAuthGuard)
@@ -49,9 +52,7 @@ export class EmailProcessorController {
    * Useful for testing parsers
    */
   @Post('preview')
-  previewParse(
-    @Body() body: { from: string; subject: string; body: string },
-  ): {
+  previewParse(@Body() body: { from: string; subject: string; body: string }): {
     parserFound: boolean;
     parserName?: string;
     result?: unknown;

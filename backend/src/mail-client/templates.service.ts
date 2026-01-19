@@ -123,7 +123,9 @@ export class TemplatesService {
       to_postcode: lead.toPostcode || '',
       move_date: moveDate,
       bedrooms: lead.bedrooms?.toString() || '',
-      quote_amount: lead.quoteAmount ? `£${Number(lead.quoteAmount).toFixed(2)}` : '',
+      quote_amount: lead.quoteAmount
+        ? `£${Number(lead.quoteAmount).toFixed(2)}`
+        : '',
       quote_link: lead.xeroQuoteLink || '',
       invoice_link: lead.xeroInvoiceLink || '',
       service_type: lead.serviceType || 'Removal Service',
@@ -162,7 +164,9 @@ export class TemplatesService {
   /**
    * Format job days into readable schedule
    */
-  private formatJobSchedule(jobDays?: { day: number; date: Date; type: string; startTime?: string }[]): string {
+  private formatJobSchedule(
+    jobDays?: { day: number; date: Date; type: string; startTime?: string }[],
+  ): string {
     if (!jobDays || jobDays.length === 0) {
       return '';
     }
@@ -208,9 +212,16 @@ export class TemplatesService {
       { name: 'quote_amount', description: 'Quote amount (£)' },
       { name: 'quote_link', description: 'Xero quote link' },
       { name: 'invoice_link', description: 'Xero invoice link' },
-      { name: 'service_type', description: 'Service type (e.g., Packing & Moving)' },
+      {
+        name: 'service_type',
+        description: 'Service type (e.g., Packing & Moving)',
+      },
       { name: 'start_time', description: 'Arrival/start time' },
-      { name: 'job_schedule', description: 'Multi-day job schedule (packing, loading, moving, unloading)' },
+      {
+        name: 'job_schedule',
+        description:
+          'Multi-day job schedule (packing, loading, moving, unloading)',
+      },
       { name: 'assessment_date', description: 'Assessment/survey date' },
       { name: 'assessment_time', description: 'Assessment/survey time' },
       {

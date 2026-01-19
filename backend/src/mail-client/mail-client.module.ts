@@ -11,11 +11,23 @@ import { ThunderbirdImportService } from './thunderbird-import.service';
 import { EmailProcessorController } from './email-processor.controller';
 import { EmailProcessorService } from './email-processor.service';
 import { EmailParserFactory } from '../emails/parsers';
-import { EmailAccount, Email, EmailTemplate, Lead, Activity } from '../entities';
+import {
+  EmailAccount,
+  Email,
+  EmailTemplate,
+  Lead,
+  Activity,
+} from '../entities';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EmailAccount, Email, EmailTemplate, Lead, Activity]),
+    TypeOrmModule.forFeature([
+      EmailAccount,
+      Email,
+      EmailTemplate,
+      Lead,
+      Activity,
+    ]),
   ],
   controllers: [
     MailClientController,

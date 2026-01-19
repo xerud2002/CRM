@@ -17,6 +17,8 @@ export enum ActivityType {
   STATUS_CHANGE = 'status_change',
   MILESTONE = 'milestone',
   ASSESSMENT = 'assessment',
+  ASSIGNMENT = 'assignment',
+  SMS = 'sms',
 }
 
 @Entity('activities')

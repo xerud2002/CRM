@@ -10,14 +10,14 @@ import {
   ActivityType,
 } from '../entities';
 
-interface AssignmentConditions {
+export interface AssignmentConditions {
   sources?: LeadSource[];
   postcodes?: string[];
   minBedrooms?: number;
   maxBedrooms?: number;
 }
 
-interface AssignmentRule {
+export interface AssignmentRule {
   id: string;
   name: string;
   conditions: AssignmentConditions;

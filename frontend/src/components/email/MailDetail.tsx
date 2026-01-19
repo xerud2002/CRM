@@ -1,7 +1,8 @@
 import { Reply, ReplyAll, Forward, Trash2, MoreVertical, Star, Mail } from 'lucide-react';
+import type { Email } from '../../types';
 
 interface MailDetailProps {
-    email: any;
+    email: Email | null;
     onReply?: () => void;
 }
 

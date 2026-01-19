@@ -10,7 +10,7 @@ export class PdfService {
   /**
    * Generate a professional quote PDF
    */
-  async generateQuotePdf(quote: Quote): Promise<Buffer> {
+  generateQuotePdf(quote: Quote): Buffer {
     const html = this.generateQuoteHtml(quote);
 
     // For server-side PDF generation, we'll use a simple approach

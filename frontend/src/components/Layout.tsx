@@ -60,7 +60,7 @@ const Layout = () => {
             try {
                 const response = await api.get('/leads/inbox/count');
                 setInboxCount(response.data);
-            } catch (error) {
+            } catch {
                 console.error('Failed to fetch inbox count');
             }
         };

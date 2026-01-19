@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
@@ -16,7 +16,7 @@ import {
 
 // Status Badge Component
 const StatusBadge = ({ status }: { status: string }) => {
-    const styles: any = {
+    const styles: Record<string, string> = {
         new: 'bg-blue-100 text-blue-800',
         contacted: 'bg-yellow-100 text-yellow-800',
         qualified: 'bg-purple-100 text-purple-800',
@@ -58,10 +58,10 @@ const Leads = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
-    const fetchLeads = async () => {
+    const fetchLeads = useCallback(async () => {
         setLoading(true);
         try {
-            const params: any = { page, limit: 10 };
+            const params: Record<string, string | number> = { page, limit: 10 };
             if (search) params.search = search;
             if (statusFilter) params.status = statusFilter;
 
@@ -73,11 +73,11 @@ const Leads = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, search, statusFilter]);
 
     useEffect(() => {
-        fetchLeads();
-    }, [page, search, statusFilter]);
+        void fetchLeads();
+    }, [fetchLeads]);
 
     return (
         <div>

@@ -26,7 +26,12 @@ export class ThunderbirdImportController {
   async preview(@Query('profilePath') profilePath?: string): Promise<{
     profilePath: string;
     accounts: ThunderbirdAccount[];
-    mboxFiles: { account: string; folder: string; path: string; size: number }[];
+    mboxFiles: {
+      account: string;
+      folder: string;
+      path: string;
+      size: number;
+    }[];
   }> {
     return this.importService.getImportPreview(profilePath);
   }

@@ -1,4 +1,10 @@
-import { IsOptional, IsDateString, IsString, IsEnum, IsArray } from 'class-validator';
+import {
+  IsOptional,
+  IsDateString,
+  IsString,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export enum ReportPeriod {
@@ -32,7 +38,9 @@ export class ReportFilterDto {
 
   @IsOptional()
   @IsArray()
-  @Transform(({ value }) => (typeof value === 'string' ? value.split(',') : value))
+  @Transform(({ value }): string[] =>
+    typeof value === 'string' ? value.split(',') : (value as string[]),
+  )
   postcodes?: string[];
 
   @IsOptional()

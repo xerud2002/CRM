@@ -22,8 +22,9 @@ const Login: React.FC = () => {
 
             login(accessToken, user);
             navigate('/');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } } };
+            setError(error.response?.data?.message || 'Failed to login. Please check your credentials.');
         } finally {
             setIsLoading(false);
         }

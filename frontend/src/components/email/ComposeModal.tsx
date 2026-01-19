@@ -29,7 +29,7 @@ interface Lead {
 interface EmailAccount {
   id: string;
   email: string;
-  displayName: string;
+  displayName?: string;
 }
 
 interface ComposeModalProps {

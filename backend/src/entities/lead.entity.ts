@@ -163,7 +163,12 @@ export class Lead {
   startTime: string;
 
   @Column({ name: 'job_days', type: 'jsonb', nullable: true })
-  jobDays: { day: number; date: Date; type: 'packing' | 'loading' | 'moving' | 'unloading'; startTime?: string }[];
+  jobDays: {
+    day: number;
+    date: Date;
+    type: 'packing' | 'loading' | 'moving' | 'unloading';
+    startTime?: string;
+  }[];
 
   @Column({ nullable: true })
   lastContactAt: Date;

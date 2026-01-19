@@ -23,7 +23,10 @@ export class CallsController {
    * Log a new call
    */
   @Post()
-  async create(@Body() dto: CreateCallDto, @Request() req: any) {
+  async create(
+    @Body() dto: CreateCallDto,
+    @Request() req: { user: { id: string } },
+  ) {
     return this.callsService.create(dto, req.user.id);
   }
 

@@ -14,10 +14,7 @@ import {
     Calendar,
     Edit,
     Trash2,
-    Clock,
     CheckCircle,
-    XCircle,
-    MessageSquare,
     FileText,
     ExternalLink,
     Save,
@@ -26,6 +23,7 @@ import {
     Receipt,
     Smartphone
 } from 'lucide-react';
+import type { Lead, EmailAccount } from '../types';
 
 type JobDay = {
     day: number;
@@ -37,14 +35,14 @@ type JobDay = {
 const LeadDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [lead, setLead] = useState<any>(null);
+    const [lead, setLead] = useState<Lead | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
     const [composeOpen, setComposeOpen] = useState(false);
     const [createQuoteOpen, setCreateQuoteOpen] = useState(false);
     const [callLogOpen, setCallLogOpen] = useState(false);
     const [smsModalOpen, setSmsModalOpen] = useState(false);
-    const [accounts, setAccounts] = useState<any[]>([]);
+    const [accounts, setAccounts] = useState<EmailAccount[]>([]);
     const [editingXeroLink, setEditingXeroLink] = useState(false);
     const [xeroLinkValue, setXeroLinkValue] = useState('');
     const [savingXeroLink, setSavingXeroLink] = useState(false);
@@ -91,7 +89,7 @@ const LeadDetail = () => {
     }, [id]);
 
     const handleSaveXeroLink = async () => {
-        if (!id) return;
+        if (!id || !lead) return;
         setSavingXeroLink(true);
         try {
             await api.patch(`/leads/${id}`, { xeroQuoteLink: xeroLinkValue || null });
@@ -110,7 +108,7 @@ const LeadDetail = () => {
     };
 
     const handleSaveInvoiceLink = async () => {
-        if (!id) return;
+        if (!id || !lead) return;
         setSavingInvoiceLink(true);
         try {
             await api.patch(`/leads/${id}`, { xeroInvoiceLink: invoiceLinkValue || null });
@@ -146,12 +144,14 @@ const LeadDetail = () => {
                 startTime: bookingData.startTime || null,
                 jobDays: bookingData.jobDays.length > 0 ? bookingData.jobDays : null
             });
-            setLead({ 
-                ...lead, 
-                serviceType: bookingData.serviceType || null,
-                startTime: bookingData.startTime || null,
-                jobDays: bookingData.jobDays.length > 0 ? bookingData.jobDays : null
-            });
+            if (lead) {
+                setLead({ 
+                    ...lead, 
+                    serviceType: bookingData.serviceType || undefined,
+                    startTime: bookingData.startTime || undefined,
+                    jobDays: bookingData.jobDays.length > 0 ? bookingData.jobDays : undefined
+                });
+            }
             setEditingBooking(false);
         } catch (error) {
             console.error('Failed to save booking details', error);
@@ -693,7 +693,7 @@ const LeadDetail = () => {
                 isOpen={smsModalOpen}
                 onClose={() => setSmsModalOpen(false)}
                 leadId={id!}
-                phoneNumber={lead?.phone || ''}
+                leadPhone={lead?.phone || ''}
                 leadName={`${lead?.firstName} ${lead?.lastName}`}
                 onSmsSent={() => {
                     setActiveTab('activity');

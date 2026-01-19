@@ -109,7 +109,7 @@ for (const testEmail of testEmails) {
 
   // Check if parser is detected
   const parser = parserFactory.detectParser(testEmail.from, testEmail.subject);
-  
+
   if (!parser) {
     console.log('❌ No parser found for this email');
     continue;

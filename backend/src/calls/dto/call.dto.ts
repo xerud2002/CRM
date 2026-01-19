@@ -1,4 +1,12 @@
-import { IsEnum, IsOptional, IsString, IsNumber, IsBoolean, IsDateString, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsDateString,
+  IsUUID,
+} from 'class-validator';
 import { CallDirection, CallStatus } from '../../entities';
 
 export class CreateCallDto {

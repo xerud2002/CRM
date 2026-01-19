@@ -55,12 +55,31 @@ export class LeadsController {
   }
 
   @Post('assignment/rules')
-  addAssignmentRule(@Body() rule: any) {
+  addAssignmentRule(
+    @Body()
+    rule: {
+      name: string;
+      conditions: Record<string, unknown>;
+      assignToUserId: string;
+      priority: number;
+      enabled: boolean;
+    },
+  ) {
     return this.autoAssignmentService.addRule(rule);
   }
 
   @Patch('assignment/rules/:id')
-  updateAssignmentRule(@Param('id') id: string, @Body() updates: any) {
+  updateAssignmentRule(
+    @Param('id') id: string,
+    @Body()
+    updates: Partial<{
+      name: string;
+      conditions: Record<string, unknown>;
+      assignToUserId: string;
+      priority: number;
+      enabled: boolean;
+    }>,
+  ) {
     return this.autoAssignmentService.updateRule(id, updates);
   }
 

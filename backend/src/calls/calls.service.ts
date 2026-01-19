@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Call, CallDirection, CallStatus, Lead, Activity, ActivityType } from '../entities';
+import {
+  Call,
+  CallDirection,
+  CallStatus,
+  Lead,
+  Activity,
+  ActivityType,
+} from '../entities';
 import { CreateCallDto, UpdateCallDto, CallQueryDto } from './dto/call.dto';
 
 @Injectable()
@@ -41,10 +48,11 @@ export class CallsService {
     const savedCall = await this.callRepository.save(call);
 
     // Create activity log
-    const directionText = dto.direction === CallDirection.OUTBOUND ? 'Outbound' : 'Inbound';
+    const directionText =
+      dto.direction === CallDirection.OUTBOUND ? 'Outbound' : 'Inbound';
     const statusText = this.getStatusText(dto.status || CallStatus.NO_ANSWER);
-    const durationText = dto.durationSeconds 
-      ? ` (${Math.floor(dto.durationSeconds / 60)}:${(dto.durationSeconds % 60).toString().padStart(2, '0')})` 
+    const durationText = dto.durationSeconds
+      ? ` (${Math.floor(dto.durationSeconds / 60)}:${(dto.durationSeconds % 60).toString().padStart(2, '0')})`
       : '';
 
     const activity = this.activityRepository.create({
@@ -82,7 +90,9 @@ export class CallsService {
     }
 
     if (query.direction) {
-      qb.andWhere('call.direction = :direction', { direction: query.direction });
+      qb.andWhere('call.direction = :direction', {
+        direction: query.direction,
+      });
     }
 
     if (query.status) {
@@ -90,7 +100,9 @@ export class CallsService {
     }
 
     if (query.followUpRequired !== undefined) {
-      qb.andWhere('call.followUpRequired = :followUp', { followUp: query.followUpRequired });
+      qb.andWhere('call.followUpRequired = :followUp', {
+        followUp: query.followUpRequired,
+      });
     }
 
     const [data, total] = await qb.skip(skip).take(limit).getManyAndCount();
@@ -184,26 +196,37 @@ export class CallsService {
       .getMany();
 
     // By direction (all time)
-    const directionStats: { direction: string; count: string }[] = await this.callRepository
-      .createQueryBuilder('call')
-      .select('call.direction', 'direction')
-      .addSelect('COUNT(*)', 'count')
-      .groupBy('call.direction')
-      .getRawMany();
+    const directionStats: { direction: string; count: string }[] =
+      await this.callRepository
+        .createQueryBuilder('call')
+        .select('call.direction', 'direction')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('call.direction')
+        .getRawMany();
 
-    const inbound = directionStats.find((d) => d.direction === 'inbound')?.count || '0';
-    const outbound = directionStats.find((d) => d.direction === 'outbound')?.count || '0';
+    const inbound =
+      directionStats.find((d) => d.direction === 'inbound')?.count || '0';
+    const outbound =
+      directionStats.find((d) => d.direction === 'outbound')?.count || '0';
 
     return {
       today: {
         total: todayCalls.length,
-        answered: todayCalls.filter((c) => c.status === CallStatus.ANSWERED).length,
-        missed: todayCalls.filter((c) => c.status === CallStatus.MISSED || c.status === CallStatus.NO_ANSWER).length,
+        answered: todayCalls.filter((c) => c.status === CallStatus.ANSWERED)
+          .length,
+        missed: todayCalls.filter(
+          (c) =>
+            c.status === CallStatus.MISSED || c.status === CallStatus.NO_ANSWER,
+        ).length,
       },
       week: {
         total: weekCalls.length,
-        answered: weekCalls.filter((c) => c.status === CallStatus.ANSWERED).length,
-        missed: weekCalls.filter((c) => c.status === CallStatus.MISSED || c.status === CallStatus.NO_ANSWER).length,
+        answered: weekCalls.filter((c) => c.status === CallStatus.ANSWERED)
+          .length,
+        missed: weekCalls.filter(
+          (c) =>
+            c.status === CallStatus.MISSED || c.status === CallStatus.NO_ANSWER,
+        ).length,
       },
       byDirection: {
         inbound: parseInt(inbound, 10),

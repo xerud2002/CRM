@@ -7,46 +7,49 @@ import { ComposeModal } from '../components/email/ComposeModal';
 import { ThunderbirdImport } from '../components/email/ThunderbirdImport';
 import { EmailProcessor } from '../components/email/EmailProcessor';
 import { RefreshCw, Bell, BellOff } from 'lucide-react';
+import type { Email as EmailType, EmailAccount } from '../types';
 
 const Email = () => {
-    const [accounts, setAccounts] = useState<any[]>([]);
+    const [accounts, setAccounts] = useState<EmailAccount[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
     const [activeFolder, setActiveFolder] = useState('inbox');
-    const [emails, setEmails] = useState<any[]>([]);
-    const [selectedEmail, setSelectedEmail] = useState<any>(null);
+    const [emails, setEmails] = useState<EmailType[]>([]);
+    const [selectedEmail, setSelectedEmail] = useState<EmailType | null>(null);
     const [loading, setLoading] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [composeOpen, setComposeOpen] = useState(false);
-    const [replyTo, setReplyTo] = useState<any>(null);
+    const [replyTo, setReplyTo] = useState<{ subject: string; from: string; body: string } | undefined>(undefined);
     const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [showThunderbirdImport, setShowThunderbirdImport] = useState(false);
     const [showEmailProcessor, setShowEmailProcessor] = useState(false);
     const [lastEmailCount, setLastEmailCount] = useState<Record<string, number>>({});
-    const pollingRef = useRef<NodeJS.Timeout | null>(null);
+    const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Request notification permission
     useEffect(() => {
         if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
+            void Notification.requestPermission();
         }
     }, []);
 
-    // 1. Fetch Accounts
-    useEffect(() => {
-        const fetchAccounts = async () => {
-            try {
-                const response = await api.get('/mail/accounts');
-                setAccounts(response.data);
-                if (response.data.length > 0 && !selectedAccount) {
-                    setSelectedAccount(response.data[0].id);
-                }
-            } catch (error) {
-                console.error('Failed to fetch accounts', error);
+    // Fetch Accounts function
+    const fetchAccounts = useCallback(async () => {
+        try {
+            const response = await api.get('/mail/accounts');
+            setAccounts(response.data);
+            if (response.data.length > 0 && !selectedAccount) {
+                setSelectedAccount(response.data[0].id);
             }
-        };
-        fetchAccounts();
-    }, []);
+        } catch (error) {
+            console.error('Failed to fetch accounts', error);
+        }
+    }, [selectedAccount]);
+
+    // 1. Fetch Accounts on mount
+    useEffect(() => {
+        void fetchAccounts();
+    }, [fetchAccounts]);
 
     // Fetch emails for an account
     const fetchEmails = useCallback(async (accountId: string, showLoading = true) => {
@@ -77,7 +80,7 @@ const Email = () => {
             }
             
             // Update unread count
-            const unread = newEmails.filter((e: any) => !e.isRead).length;
+            const unread = newEmails.filter((e: EmailType) => !e.isRead).length;
             setUnreadCounts(prev => ({ ...prev, [accountId]: unread }));
             
         } catch (error) {
@@ -104,9 +107,9 @@ const Email = () => {
     // 2. Fetch Emails when Account changes
     useEffect(() => {
         if (selectedAccount) {
-            fetchEmails(selectedAccount);
+            void fetchEmails(selectedAccount);
         }
-    }, [selectedAccount]);
+    }, [selectedAccount, fetchEmails]);
 
     // 3. Polling for new emails (every 30 seconds)
     useEffect(() => {
@@ -150,30 +153,26 @@ const Email = () => {
     };
 
     // Handle selection
-    const handleSelectEmail = async (email: any) => {
+    const handleSelectEmail = (email: EmailType) => {
         setSelectedEmail(email);
         // Mark as read
         if (!email.isRead) {
-            try {
-                // Optimistic update
-                setEmails(prev => prev.map(e => 
-                    e.id === email.id ? { ...e, isRead: true } : e
-                ));
-                // Update unread count
-                if (selectedAccount) {
-                    setUnreadCounts(prev => ({
-                        ...prev,
-                        [selectedAccount]: Math.max(0, (prev[selectedAccount] || 0) - 1)
-                    }));
-                }
-            } catch (error) {
-                console.error('Failed to mark as read', error);
+            // Optimistic update
+            setEmails(prev => prev.map(e => 
+                e.id === email.id ? { ...e, isRead: true } : e
+            ));
+            // Update unread count
+            if (selectedAccount) {
+                setUnreadCounts(prev => ({
+                    ...prev,
+                    [selectedAccount]: Math.max(0, (prev[selectedAccount] || 0) - 1)
+                }));
             }
         }
     };
 
     const handleCompose = () => {
-        setReplyTo(null);
+        setReplyTo(undefined);
         setComposeOpen(true);
     };
 
@@ -260,7 +259,7 @@ const Email = () => {
                     <>
                         <MailList
                             emails={emails}
-                            selectedEmailId={selectedEmail?.id}
+                            selectedEmailId={selectedEmail?.id ?? null}
                             onSelectEmail={handleSelectEmail}
                             loading={loading}
                         />
@@ -304,7 +303,7 @@ const Email = () => {
                     onSuccess={() => {
                         // Refresh data after processing
                         if (selectedAccount) {
-                            fetchEmails(selectedAccount, activeFolder);
+                            void fetchEmails(selectedAccount);
                         }
                     }}
                 />

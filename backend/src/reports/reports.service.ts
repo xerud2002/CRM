@@ -49,6 +49,31 @@ interface RawCountResult {
   count: string | null;
 }
 
+interface RawCallStatsResult {
+  total: string | null;
+  answered: string | null;
+  outbound: string | null;
+  inbound: string | null;
+  avgDuration: string | null;
+}
+
+interface RawEmailStatsResult {
+  total: string | null;
+  sent: string | null;
+  received: string | null;
+}
+
+interface RawAssessmentStatsResult {
+  total: string | null;
+  completed: string | null;
+  cancelled: string | null;
+  video: string | null;
+  onSite: string | null;
+}
+
+// TypeORM getRawOne() returns T | undefined
+type RawResult<T> = T | undefined;
+
 interface RawStaffResult {
   userId: string;
   name: string | null;
@@ -246,16 +271,17 @@ export class ReportsService {
   async getRevenueReport(filter: ReportFilterDto) {
     const { start, end } = this.getDateRange(filter);
 
-    const acceptedQuotes: RawRevenueResult | null = await this.quoteRepository
-      .createQueryBuilder('quote')
-      .select('SUM(quote.total)', 'totalValue')
-      .addSelect('COUNT(*)', 'count')
-      .addSelect('AVG(quote.total)', 'averageValue')
-      .where('quote.status = :status', { status: QuoteStatus.ACCEPTED })
-      .andWhere('quote.updatedAt BETWEEN :start AND :end', { start, end })
-      .getRawOne();
+    const acceptedQuotes: RawResult<RawRevenueResult> =
+      await this.quoteRepository
+        .createQueryBuilder('quote')
+        .select('SUM(quote.total)', 'totalValue')
+        .addSelect('COUNT(*)', 'count')
+        .addSelect('AVG(quote.total)', 'averageValue')
+        .where('quote.status = :status', { status: QuoteStatus.ACCEPTED })
+        .andWhere('quote.updatedAt BETWEEN :start AND :end', { start, end })
+        .getRawOne();
 
-    const sentQuotes: RawRevenueResult | null = await this.quoteRepository
+    const sentQuotes: RawResult<RawRevenueResult> = await this.quoteRepository
       .createQueryBuilder('quote')
       .select('SUM(quote.total)', 'totalValue')
       .addSelect('COUNT(*)', 'count')
@@ -307,7 +333,7 @@ export class ReportsService {
   async getActivityReport(filter: ReportFilterDto) {
     const { start, end } = this.getDateRange(filter);
 
-    const callStats = await this.callRepository
+    const callStats: RawResult<RawCallStatsResult> = await this.callRepository
       .createQueryBuilder('call')
       .select('COUNT(*)', 'total')
       .addSelect(
@@ -332,47 +358,49 @@ export class ReportsService {
       .setParameter('inbound', 'inbound')
       .getRawOne();
 
-    const emailStats = await this.emailRepository
-      .createQueryBuilder('email')
-      .select('COUNT(*)', 'total')
-      .addSelect(
-        'COUNT(CASE WHEN email.direction = :outbound THEN 1 END)',
-        'sent',
-      )
-      .addSelect(
-        'COUNT(CASE WHEN email.direction = :inbound THEN 1 END)',
-        'received',
-      )
-      .where('email.createdAt BETWEEN :start AND :end', { start, end })
-      .setParameter('outbound', 'outbound')
-      .setParameter('inbound', 'inbound')
-      .getRawOne();
+    const emailStats: RawResult<RawEmailStatsResult> =
+      await this.emailRepository
+        .createQueryBuilder('email')
+        .select('COUNT(*)', 'total')
+        .addSelect(
+          'COUNT(CASE WHEN email.direction = :outbound THEN 1 END)',
+          'sent',
+        )
+        .addSelect(
+          'COUNT(CASE WHEN email.direction = :inbound THEN 1 END)',
+          'received',
+        )
+        .where('email.createdAt BETWEEN :start AND :end', { start, end })
+        .setParameter('outbound', 'outbound')
+        .setParameter('inbound', 'inbound')
+        .getRawOne();
 
-    const assessmentStats = await this.assessmentRepository
-      .createQueryBuilder('assessment')
-      .select('COUNT(*)', 'total')
-      .addSelect(
-        'COUNT(CASE WHEN assessment.status = :completed THEN 1 END)',
-        'completed',
-      )
-      .addSelect(
-        'COUNT(CASE WHEN assessment.status = :cancelled THEN 1 END)',
-        'cancelled',
-      )
-      .addSelect(
-        'COUNT(CASE WHEN assessment.type = :video THEN 1 END)',
-        'video',
-      )
-      .addSelect(
-        'COUNT(CASE WHEN assessment.type = :onSite THEN 1 END)',
-        'onSite',
-      )
-      .where('assessment.scheduledAt BETWEEN :start AND :end', { start, end })
-      .setParameter('completed', AssessmentStatus.COMPLETED)
-      .setParameter('cancelled', AssessmentStatus.CANCELLED)
-      .setParameter('video', 'video')
-      .setParameter('onSite', 'on_site')
-      .getRawOne();
+    const assessmentStats: RawResult<RawAssessmentStatsResult> =
+      await this.assessmentRepository
+        .createQueryBuilder('assessment')
+        .select('COUNT(*)', 'total')
+        .addSelect(
+          'COUNT(CASE WHEN assessment.status = :completed THEN 1 END)',
+          'completed',
+        )
+        .addSelect(
+          'COUNT(CASE WHEN assessment.status = :cancelled THEN 1 END)',
+          'cancelled',
+        )
+        .addSelect(
+          'COUNT(CASE WHEN assessment.type = :video THEN 1 END)',
+          'video',
+        )
+        .addSelect(
+          'COUNT(CASE WHEN assessment.type = :onSite THEN 1 END)',
+          'onSite',
+        )
+        .where('assessment.scheduledAt BETWEEN :start AND :end', { start, end })
+        .setParameter('completed', AssessmentStatus.COMPLETED)
+        .setParameter('cancelled', AssessmentStatus.CANCELLED)
+        .setParameter('video', 'video')
+        .setParameter('onSite', 'on_site')
+        .getRawOne();
 
     const callTotal = parseInt(callStats?.total || '0', 10);
     const callAnswered = parseInt(callStats?.answered || '0', 10);
@@ -441,7 +469,7 @@ export class ReportsService {
       })
       .getCount();
 
-    const assessmentBookedResult: RawCountResult | null =
+    const assessmentBookedResult: RawResult<RawCountResult> =
       await this.assessmentRepository
         .createQueryBuilder('assessment')
         .innerJoin('assessment.lead', 'lead')
@@ -450,7 +478,7 @@ export class ReportsService {
         .getRawOne();
     const assessmentBooked = parseInt(assessmentBookedResult?.count || '0', 10);
 
-    const assessmentCompletedResult: RawCountResult | null =
+    const assessmentCompletedResult: RawResult<RawCountResult> =
       await this.assessmentRepository
         .createQueryBuilder('assessment')
         .innerJoin('assessment.lead', 'lead')
@@ -465,23 +493,24 @@ export class ReportsService {
       10,
     );
 
-    const quoteSentResult: RawCountResult | null = await this.quoteRepository
-      .createQueryBuilder('quote')
-      .innerJoin('quote.lead', 'lead')
-      .where('lead.createdAt BETWEEN :start AND :end', { start, end })
-      .andWhere('quote.status IN (:...statuses)', {
-        statuses: [
-          QuoteStatus.SENT,
-          QuoteStatus.VIEWED,
-          QuoteStatus.ACCEPTED,
-          QuoteStatus.DECLINED,
-        ],
-      })
-      .select('COUNT(DISTINCT quote.leadId)', 'count')
-      .getRawOne();
+    const quoteSentResult: RawResult<RawCountResult> =
+      await this.quoteRepository
+        .createQueryBuilder('quote')
+        .innerJoin('quote.lead', 'lead')
+        .where('lead.createdAt BETWEEN :start AND :end', { start, end })
+        .andWhere('quote.status IN (:...statuses)', {
+          statuses: [
+            QuoteStatus.SENT,
+            QuoteStatus.VIEWED,
+            QuoteStatus.ACCEPTED,
+            QuoteStatus.DECLINED,
+          ],
+        })
+        .select('COUNT(DISTINCT quote.leadId)', 'count')
+        .getRawOne();
     const quoteSent = parseInt(quoteSentResult?.count || '0', 10);
 
-    const quoteAcceptedResult: RawCountResult | null =
+    const quoteAcceptedResult: RawResult<RawCountResult> =
       await this.quoteRepository
         .createQueryBuilder('quote')
         .innerJoin('quote.lead', 'lead')
@@ -606,7 +635,7 @@ export class ReportsService {
     const result: RawLocationResult[] = await this.leadRepository
       .createQueryBuilder('lead')
       .select(
-        "UPPER(SUBSTRING(lead.fromPostcode FROM 1 FOR 2))",
+        'UPPER(SUBSTRING(lead.fromPostcode FROM 1 FOR 2))',
         'postcodeArea',
       )
       .addSelect('COUNT(*)', 'total')
@@ -618,7 +647,7 @@ export class ReportsService {
       })
       .andWhere('lead.fromPostcode IS NOT NULL')
       .setParameter('won', LeadStatus.WON)
-      .groupBy("UPPER(SUBSTRING(lead.fromPostcode FROM 1 FOR 2))")
+      .groupBy('UPPER(SUBSTRING(lead.fromPostcode FROM 1 FOR 2))')
       .orderBy('COUNT(*)', 'DESC')
       .limit(20)
       .getRawMany();

@@ -111,7 +111,10 @@ export class EmailProcessorService {
         }
 
         // Create new lead
-        const lead = await this.createLeadFromParsedData(parseResult.lead, email);
+        const lead = await this.createLeadFromParsedData(
+          parseResult.lead,
+          email,
+        );
         result.leadsCreated++;
         result.leads.push({
           id: lead.id,
@@ -123,8 +126,11 @@ export class EmailProcessorService {
           `Created lead from ${parseResult.lead.source}: ${lead.email}`,
         );
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        result.errors.push(`Error processing email ${email.id}: ${errorMessage}`);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        result.errors.push(
+          `Error processing email ${email.id}: ${errorMessage}`,
+        );
         this.logger.error(`Failed to process email ${email.id}:`, error);
       }
     }
@@ -163,7 +169,10 @@ export class EmailProcessorService {
     );
 
     if (!parser) {
-      return { success: false, error: 'No parser available for this email format' };
+      return {
+        success: false,
+        error: 'No parser available for this email format',
+      };
     }
 
     const parseResult = this.parserFactory.parseEmail(
@@ -287,14 +296,18 @@ export class EmailProcessorService {
   /**
    * Preview what would be parsed from an email (for testing)
    */
-  previewParse(from: string, subject: string, body: string): {
+  previewParse(
+    from: string,
+    subject: string,
+    body: string,
+  ): {
     parserFound: boolean;
     parserName?: string;
     result?: ParsedLeadData;
     error?: string;
   } {
     const parser = this.parserFactory.detectParser(from, subject);
-    
+
     if (!parser) {
       return { parserFound: false, error: 'No parser found for this email' };
     }

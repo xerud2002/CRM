@@ -1,7 +1,8 @@
-import { Mail, Send, Trash2, Archive, Inbox, Plus, Settings, Download, Zap } from 'lucide-react';
+import { Send, Trash2, Archive, Inbox, Plus, Settings, Download, Zap } from 'lucide-react';
+import type { EmailAccount } from '../../types';
 
 interface MailSidebarProps {
-    accounts: any[];
+    accounts: EmailAccount[];
     selectedAccount: string | null;
     onSelectAccount: (id: string) => void;
     activeFolder: string;
@@ -51,7 +52,7 @@ export const MailSidebar = ({
                     {accounts.length === 0 ? (
                         <p className="text-sm text-slate-400 py-2">No accounts configured</p>
                     ) : (
-                        accounts.map((account: any) => {
+                        accounts.map((account) => {
                             const unread = unreadCounts[account.id] || 0;
                             return (
                                 <button

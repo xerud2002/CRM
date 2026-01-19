@@ -10,7 +10,6 @@ import {
     Home,
     RefreshCw,
     Clock,
-    User,
     ChevronRight,
 } from 'lucide-react';
 

@@ -70,7 +70,6 @@ export const QuoteDetailModal = ({ isOpen, onClose, quoteId, onUpdate }: QuoteDe
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, quoteId]);
-  };
 
   const handleSend = async () => {
     if (!quote) return;
@@ -306,14 +305,14 @@ export const QuoteDetailModal = ({ isOpen, onClose, quoteId, onUpdate }: QuoteDe
                       disabled={actionLoading}
                       className="px-4 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 disabled:opacity-50"
                     >
-                      ✗ Declined
+                      X Declined
                     </button>
                     <button
                       onClick={handleAccept}
                       disabled={actionLoading}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                     >
-                      ✓ Accepted
+                      OK Accepted
                     </button>
                   </>
                 )}
@@ -325,5 +324,3 @@ export const QuoteDetailModal = ({ isOpen, onClose, quoteId, onUpdate }: QuoteDe
     </div>
   );
 };
-
-export default QuoteDetailModal;

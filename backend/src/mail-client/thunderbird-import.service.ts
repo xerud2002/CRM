@@ -47,7 +47,8 @@ export class ThunderbirdImportService {
    * Get default Thunderbird profile path
    */
   getThunderbirdProfilePath(): string | null {
-    const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+    const appData =
+      process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
     const thunderbirdPath = path.join(appData, 'Thunderbird', 'Profiles');
 
     if (!fs.existsSync(thunderbirdPath)) {

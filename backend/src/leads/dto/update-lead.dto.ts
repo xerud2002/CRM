@@ -1,5 +1,12 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsOptional, IsEnum, IsNumber, IsBoolean, IsString, IsUrl } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsNumber,
+  IsBoolean,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { CreateLeadDto } from './create-lead.dto';
 import { LeadStatus, ContactStatus } from '../../entities';
 
@@ -42,5 +49,10 @@ export class UpdateLeadDto extends PartialType(CreateLeadDto) {
   startTime?: string;
 
   @IsOptional()
-  jobDays?: { day: number; date: Date; type: 'packing' | 'loading' | 'moving' | 'unloading'; startTime?: string }[];
+  jobDays?: {
+    day: number;
+    date: Date;
+    type: 'packing' | 'loading' | 'moving' | 'unloading';
+    startTime?: string;
+  }[];
 }

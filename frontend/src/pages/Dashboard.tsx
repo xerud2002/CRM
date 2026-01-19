@@ -37,8 +37,35 @@ const StatCard = ({ title, value, change, icon: Icon, color }: StatCardProps) =>
     </div>
 );
 
+interface DashboardStats {
+    newLeads?: number;
+    pendingQuotes?: number;
+    confirmedBookings?: number;
+    monthlyRevenue?: number;
+    changes?: {
+        newLeads?: number;
+        pendingQuotes?: number;
+        confirmedBookings?: number;
+        monthlyRevenue?: number;
+    };
+    contactMetrics?: {
+        totalLeads: number;
+        contactedPercent: number;
+        respondedPercent: number;
+    };
+    conversionFunnel?: {
+        totalLeads: number;
+        surveyBooked: number;
+        surveyBookedPercent: number;
+        quoteSent: number;
+        quoteSentPercent: number;
+        quoteAccepted: number;
+        quoteAcceptedPercent: number;
+    };
+}
+
 const Dashboard = () => {
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -53,7 +80,7 @@ const Dashboard = () => {
             }
         };
 
-        fetchStats();
+        void fetchStats();
     }, []);
 
     if (loading) {
@@ -65,7 +92,15 @@ const Dashboard = () => {
     }
 
     const metrics = stats?.contactMetrics || { totalLeads: 0, contactedPercent: 0, respondedPercent: 0 };
-    const funnel = stats?.conversionFunnel || { surveyBooked: 0, quoteAccepted: 0 };
+    const funnel = stats?.conversionFunnel || { 
+        totalLeads: 0, 
+        surveyBooked: 0, 
+        surveyBookedPercent: 0, 
+        quoteSent: 0, 
+        quoteSentPercent: 0, 
+        quoteAccepted: 0, 
+        quoteAcceptedPercent: 0 
+    };
 
     return (
         <div>

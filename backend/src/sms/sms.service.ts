@@ -19,7 +19,7 @@ interface TwilioClient {
   };
 }
 
-interface SmsResult {
+export interface SmsResult {
   success: boolean;
   messageId?: string;
   error?: string;
@@ -38,10 +38,10 @@ export class SmsService {
     @InjectRepository(Activity)
     private readonly activityRepository: Repository<Activity>,
   ) {
-    void this.initializeTwilio();
+    this.initializeTwilio();
   }
 
-  private async initializeTwilio(): Promise<void> {
+  private initializeTwilio(): void {
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
     this.fromNumber =
@@ -210,5 +210,27 @@ export class SmsService {
 
   isConfigured(): boolean {
     return this.twilioClient !== null && this.fromNumber !== '';
+  }
+
+  getSimplePreview(template: SmsTemplate, firstName: string): string {
+    const templates: Record<SmsTemplate, string> = {
+      [SmsTemplate.APPOINTMENT_REMINDER]:
+        'Hi {{firstName}}, reminder: your assessment is scheduled for {{date}}. Reply YES to confirm. - Holdem Removals',
+      [SmsTemplate.QUOTE_FOLLOW_UP]:
+        'Hi {{firstName}}, we sent you a quote for your move. Any questions? Call us or reply to this message. - Holdem Removals',
+      [SmsTemplate.BOOKING_CONFIRMATION]:
+        'Hi {{firstName}}, your move on {{moveDate}} is confirmed! Our team will arrive at {{startTime}}. - Holdem Removals',
+      [SmsTemplate.CUSTOM]: '',
+    };
+
+    const content = templates[template] || '';
+    return content
+      .replace(/\{\{firstName\}\}/g, firstName)
+      .replace(/\{\{fullName\}\}/g, firstName)
+      .replace(/\{\{fromPostcode\}\}/g, 'XX1 1XX')
+      .replace(/\{\{toPostcode\}\}/g, 'YY1 1YY')
+      .replace(/\{\{moveDate\}\}/g, 'TBC')
+      .replace(/\{\{date\}\}/g, 'TBC')
+      .replace(/\{\{startTime\}\}/g, 'morning');
   }
 }
