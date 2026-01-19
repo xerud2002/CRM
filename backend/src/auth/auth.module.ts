@@ -9,22 +9,22 @@ import { JwtStrategy } from './jwt.strategy';
 import { User } from '../entities';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([User]),
-        PassportModule.register({ defaultStrategy: 'jwt' }),
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                secret: configService.get('JWT_SECRET', 'default-secret'),
-                signOptions: {
-                    expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
-                },
-            }),
-        }),
-    ],
-    controllers: [AuthController],
-    providers: [AuthService, JwtStrategy],
-    exports: [AuthService, JwtStrategy, PassportModule],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get('JWT_SECRET', 'default-secret'),
+        signOptions: {
+          expiresIn: configService.get('JWT_EXPIRES_IN', '7d'),
+        },
+      }),
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService, JwtStrategy, PassportModule],
 })
-export class AuthModule { }
+export class AuthModule {}

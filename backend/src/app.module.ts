@@ -7,6 +7,8 @@ import { AuthModule } from './auth';
 import { LeadsModule } from './leads';
 import { DashboardModule } from './dashboard';
 import { MailClientModule } from './mail-client';
+import { ActivitiesModule } from './activities';
+import { AssessmentsModule } from './assessments';
 import {
   User,
   Lead,
@@ -55,8 +57,10 @@ import {
     LeadsModule,
     DashboardModule,
     MailClientModule,
+    ActivitiesModule,
+    AssessmentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

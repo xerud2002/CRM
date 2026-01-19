@@ -7,9 +7,9 @@ import { SmtpService } from './smtp.service';
 import { EmailAccount, Email, Lead } from '../entities';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([EmailAccount, Email, Lead])],
-    controllers: [MailClientController],
-    providers: [MailClientService, ImapService, SmtpService],
-    exports: [MailClientService],
+  imports: [TypeOrmModule.forFeature([EmailAccount, Email, Lead])],
+  controllers: [MailClientController],
+  providers: [MailClientService, ImapService, SmtpService],
+  exports: [MailClientService, ImapService],
 })
-export class MailClientModule { }
+export class MailClientModule {}

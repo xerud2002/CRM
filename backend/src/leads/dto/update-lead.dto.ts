@@ -4,22 +4,22 @@ import { CreateLeadDto } from './create-lead.dto';
 import { LeadStatus, ContactStatus } from '../../entities';
 
 export class UpdateLeadDto extends PartialType(CreateLeadDto) {
-    @IsOptional()
-    @IsEnum(LeadStatus)
-    status?: LeadStatus;
+  @IsOptional()
+  @IsEnum(LeadStatus)
+  status?: LeadStatus;
 
-    @IsOptional()
-    @IsEnum(ContactStatus)
-    contactStatus?: ContactStatus;
+  @IsOptional()
+  @IsEnum(ContactStatus)
+  contactStatus?: ContactStatus;
 
-    @IsOptional()
-    @IsNumber()
-    quoteAmount?: number;
+  @IsOptional()
+  @IsNumber()
+  quoteAmount?: number;
 
-    @IsOptional()
-    @IsBoolean()
-    quoteAccepted?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  quoteAccepted?: boolean;
 
-    @IsOptional()
-    assignedToId?: string;
+  @IsOptional()
+  assignedToId?: string;
 }

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import {
     LayoutDashboard,
     Users,
+    Inbox,
     Mail,
     Calendar,
     Phone,
@@ -21,9 +23,10 @@ interface SidebarItemProps {
     label: string;
     to: string;
     active: boolean;
+    badge?: number;
 }
 
-const SidebarItem = ({ icon: Icon, label, to, active }: SidebarItemProps) => (
+const SidebarItem = ({ icon: Icon, label, to, active, badge }: SidebarItemProps) => (
     <Link
         to={to}
         className={`flex items-center px-4 py-3 mb-1 rounded-lg transition-colors group ${active
@@ -33,7 +36,13 @@ const SidebarItem = ({ icon: Icon, label, to, active }: SidebarItemProps) => (
     >
         <Icon size={20} className={`${active ? 'text-white' : 'text-slate-400 group-hover:text-white'} mr-3`} />
         <span className="font-medium text-sm">{label}</span>
-        {active && <ChevronRight size={16} className="ml-auto" />}
+        {badge && badge > 0 ? (
+            <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {badge > 99 ? '99+' : badge}
+            </span>
+        ) : active ? (
+            <ChevronRight size={16} className="ml-auto" />
+        ) : null}
     </Link>
 );
 
@@ -42,6 +51,22 @@ const Layout = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [inboxCount, setInboxCount] = useState(0);
+
+    // Fetch inbox count
+    useEffect(() => {
+        const fetchInboxCount = async () => {
+            try {
+                const response = await api.get('/leads/inbox/count');
+                setInboxCount(response.data);
+            } catch (error) {
+                console.error('Failed to fetch inbox count');
+            }
+        };
+        fetchInboxCount();
+        const interval = setInterval(fetchInboxCount, 60000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -50,9 +75,10 @@ const Layout = () => {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
+        { icon: Inbox, label: 'Inbox', to: '/inbox', badge: inboxCount },
         { icon: Users, label: 'Leads', to: '/leads' },
         { icon: Mail, label: 'Email', to: '/email' },
-        { icon: Calendar, label: 'Calendar', to: '/calendar' },
+        { icon: Calendar, label: 'Assessments', to: '/assessments' },
         { icon: FileText, label: 'Quotes', to: '/quotes' },
         { icon: Phone, label: 'Calls', to: '/calls' },
     ];
@@ -108,6 +134,7 @@ const Layout = () => {
                             label={item.label}
                             to={item.to}
                             active={location.pathname === item.to}
+                            badge={'badge' in item ? item.badge : undefined}
                         />
                     ))}
                 </div>

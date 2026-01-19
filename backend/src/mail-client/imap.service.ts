@@ -1,37 +1,203 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EmailAccount } from '../entities';
-// Note: We'll need 'imap-simple' package for this
-// For now, mocking the structure as we need to install dependencies
+import { EmailAccount, Email, EmailDirection, Lead } from '../entities';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Imap = require('imap-simple');
+import { simpleParser, Source } from 'mailparser';
+
+export interface ParsedEmail {
+  messageId: string;
+  subject: string;
+  from: string;
+  to: string;
+  date: Date;
+  body: string;
+  htmlBody?: string;
+  attachments?: { filename: string; size: number; contentType: string }[];
+}
+
+interface ImapMessage {
+  parts: { which: string; body: unknown }[];
+  attributes: { uid: number; flags: string[] };
+}
 
 @Injectable()
 export class ImapService {
-    private readonly logger = new Logger(ImapService.name);
+  private readonly logger = new Logger(ImapService.name);
 
-    constructor(
-        @InjectRepository(EmailAccount)
-        private readonly accountRepository: Repository<EmailAccount>,
-    ) { }
+  constructor(
+    @InjectRepository(EmailAccount)
+    private readonly accountRepository: Repository<EmailAccount>,
+    @InjectRepository(Email)
+    private readonly emailRepository: Repository<Email>,
+    @InjectRepository(Lead)
+    private readonly leadRepository: Repository<Lead>,
+  ) {}
 
-    async fetchEmails(accountId: string) {
-        const account = await this.accountRepository.findOne({ where: { id: accountId } });
-        if (!account) return;
-
-        this.logger.log(`Fetching emails for ${account.email}...`);
-
-        // In a real implementation:
-        // 1. Connect to IMAP
-        // 2. Open Inbox
-        // 3. Search for new messages since 'lastSyncAt'
-        // 4. Parse messages
-        // 5. Return parsed messages
-
-        return [];
+  async fetchEmails(
+    accountId: string,
+    folder = 'INBOX',
+    limit = 50,
+  ): Promise<Email[]> {
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId },
+    });
+    if (!account) {
+      this.logger.error(`Account ${accountId} not found`);
+      return [];
     }
 
-    async getFolders(accountId: string) {
-        // List IMAP folders
-        return ['INBOX', 'Sent', 'Trash', 'Drafts'];
+    this.logger.log(`Fetching emails for ${account.email} from ${folder}...`);
+
+    const config = {
+      imap: {
+        user: account.username,
+        password: account.passwordEncrypted, // In production, decrypt this
+        host: account.imapHost,
+        port: account.imapPort,
+        tls: true,
+        tlsOptions: { rejectUnauthorized: false },
+        authTimeout: 10000,
+      },
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let connection: any = null;
+    const savedEmails: Email[] = [];
+
+    try {
+      connection = await Imap.connect(config);
+      await connection.openBox(folder);
+
+      // Search for recent emails (last 7 days or since last sync)
+      const searchDate = account.lastSyncAt
+        ? account.lastSyncAt
+        : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+      const searchCriteria = [['SINCE', searchDate]];
+      const fetchOptions = {
+        bodies: ['HEADER', 'TEXT', ''],
+        markSeen: false,
+      };
+
+      const messages: ImapMessage[] = await connection.search(
+        searchCriteria,
+        fetchOptions,
+      );
+      this.logger.log(`Found ${messages.length} messages`);
+
+      // Process only the most recent ones
+      const recentMessages = messages.slice(-limit);
+
+      for (const message of recentMessages) {
+        try {
+          const all = message.parts.find((p) => p.which === '');
+          if (!all) continue;
+
+          const parsed = await simpleParser(all.body as Source);
+          const messageId =
+            parsed.messageId || `${Date.now()}-${Math.random()}`;
+
+          // Check if already exists
+          const existing = await this.emailRepository.findOne({
+            where: { messageId },
+          });
+          if (existing) continue;
+
+          // Try to match to a lead
+          const fromEmail = this.extractEmail(parsed.from?.text || '');
+          const toEmail = this.extractEmail(parsed.to?.text || '');
+
+          let lead = await this.leadRepository.findOne({
+            where: { email: fromEmail },
+          });
+          if (!lead) {
+            lead = await this.leadRepository.findOne({
+              where: { email: toEmail },
+            });
+          }
+
+          const email = this.emailRepository.create({
+            messageId,
+            subject: parsed.subject || '(No Subject)',
+            body: parsed.text || '',
+            fromAddress: fromEmail || parsed.from?.text || '',
+            toAddress: toEmail || parsed.to?.text || '',
+            direction:
+              fromEmail === account.email
+                ? EmailDirection.OUTBOUND
+                : EmailDirection.INBOUND,
+            sentAt: parsed.date || new Date(),
+            lead: lead || undefined,
+            attachments: parsed.attachments?.map((a) => ({
+              filename: a.filename || 'attachment',
+              size: a.size || 0,
+              contentType: a.contentType || 'application/octet-stream',
+            })),
+          });
+
+          const saved = await this.emailRepository.save(email);
+          savedEmails.push(saved);
+        } catch (parseError) {
+          this.logger.error(
+            `Error parsing message: ${(parseError as Error).message}`,
+          );
+        }
+      }
+
+      // Update last sync time
+      account.lastSyncAt = new Date();
+      await this.accountRepository.save(account);
+
+      this.logger.log(`Saved ${savedEmails.length} new emails`);
+    } catch (error) {
+      this.logger.error(
+        `IMAP error for ${account.email}: ${(error as Error).message}`,
+      );
+      throw error;
+    } finally {
+      if (connection) {
+        connection.end();
+      }
     }
+
+    return savedEmails;
+  }
+
+  async getFolders(accountId: string): Promise<string[]> {
+    const account = await this.accountRepository.findOne({
+      where: { id: accountId },
+    });
+    if (!account) return [];
+
+    const config = {
+      imap: {
+        user: account.username,
+        password: account.passwordEncrypted,
+        host: account.imapHost,
+        port: account.imapPort,
+        tls: true,
+        tlsOptions: { rejectUnauthorized: false },
+      },
+    };
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const connection: any = await Imap.connect(config);
+      const boxes: Record<string, unknown> = await connection.getBoxes();
+      connection.end();
+      return Object.keys(boxes);
+    } catch (error) {
+      this.logger.error(
+        `Error getting folders: ${(error as Error).message}`,
+      );
+      return ['INBOX', 'Sent', 'Trash', 'Drafts'];
+    }
+  }
+
+  private extractEmail(text: string): string {
+    const match = text.match(/<([^>]+)>/) || text.match(/([^\s<]+@[^\s>]+)/);
+    return match ? match[1].toLowerCase() : text.toLowerCase();
+  }
 }

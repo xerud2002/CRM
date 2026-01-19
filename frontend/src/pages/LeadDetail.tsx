@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import ActivityTimeline from '../components/timeline/ActivityTimeline';
 import {
     ArrowLeft,
     Mail,
@@ -180,10 +181,7 @@ const LeadDetail = () => {
                         )}
 
                         {activeTab === 'activity' && (
-                            <div className="text-center py-10 text-slate-500">
-                                <Clock size={48} className="mx-auto mb-4 opacity-50" />
-                                <p>Activity timeline implementation pending.</p>
-                            </div>
+                            <ActivityTimeline leadId={id!} />
                         )}
 
                         {activeTab === 'quotes' && (

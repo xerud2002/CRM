@@ -6,6 +6,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
 import LeadDetail from './pages/LeadDetail';
+import LeadInbox from './pages/LeadInbox';
+import Assessments from './pages/Assessments';
 import Email from './pages/Email';
 import './styles/global.css';
 
@@ -38,10 +40,11 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
+            <Route path="inbox" element={<LeadInbox />} />
             <Route path="leads" element={<Leads />} />
             <Route path="leads/:id" element={<LeadDetail />} />
             <Route path="email" element={<Email />} />
-            <Route path="calendar" element={<div className="p-4">Calendar Component (Coming Soon)</div>} />
+            <Route path="assessments" element={<Assessments />} />
             <Route path="quotes" element={<div className="p-4">Quotes Component (Coming Soon)</div>} />
             <Route path="calls" element={<div className="p-4">Calls Component (Coming Soon)</div>} />
             <Route path="settings" element={<div className="p-4">Settings Component (Coming Soon)</div>} />
