@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import {
     Search,
@@ -49,6 +50,7 @@ interface Lead {
 }
 
 const Leads = () => {
+    const navigate = useNavigate();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -170,7 +172,11 @@ const Leads = () => {
                                 </tr>
                             ) : (
                                 leads.map((lead) => (
-                                    <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr
+                                        key={lead.id}
+                                        onClick={() => navigate(`/leads/${lead.id}`)}
+                                        className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
                                                 <div className="flex-shrink-0 h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200">
@@ -213,7 +219,13 @@ const Leads = () => {
                                             {lead.source}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button className="text-slate-400 hover:text-primary-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    // Logic for dropdown menu
+                                                }}
+                                                className="text-slate-400 hover:text-primary-600 p-2 rounded-full hover:bg-slate-100 transition-colors"
+                                            >
                                                 <MoreVertical size={18} />
                                             </button>
                                         </td>

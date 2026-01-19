@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
+import LeadDetail from './pages/LeadDetail';
 import Email from './pages/Email';
 import './styles/global.css';
 
@@ -38,6 +39,7 @@ function App() {
           }>
             <Route index element={<Dashboard />} />
             <Route path="leads" element={<Leads />} />
+            <Route path="leads/:id" element={<LeadDetail />} />
             <Route path="email" element={<Email />} />
             <Route path="calendar" element={<div className="p-4">Calendar Component (Coming Soon)</div>} />
             <Route path="quotes" element={<div className="p-4">Quotes Component (Coming Soon)</div>} />
