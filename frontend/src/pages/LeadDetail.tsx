@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import ActivityTimeline from '../components/timeline/ActivityTimeline';
+import { ComposeModal } from '../components/email/ComposeModal';
 import {
     ArrowLeft,
     Mail,
@@ -22,6 +23,8 @@ const LeadDetail = () => {
     const [lead, setLead] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('overview');
+    const [composeOpen, setComposeOpen] = useState(false);
+    const [accounts, setAccounts] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchLead = async () => {
@@ -35,7 +38,19 @@ const LeadDetail = () => {
             }
         };
 
-        if (id) fetchLead();
+        const fetchAccounts = async () => {
+            try {
+                const response = await api.get('/mail/accounts');
+                setAccounts(response.data);
+            } catch (error) {
+                console.error('Failed to fetch email accounts', error);
+            }
+        };
+
+        if (id) {
+            fetchLead();
+            fetchAccounts();
+        }
     }, [id]);
 
     if (loading) {
@@ -94,8 +109,13 @@ const LeadDetail = () => {
                         <div className="px-3 py-1 bg-slate-100 rounded-full text-slate-700 font-medium text-sm capitalize">
                             {lead.status}
                         </div>
-                        <button className="btn btn-outline" title="Send Email">
+                        <button 
+                            onClick={() => setComposeOpen(true)}
+                            className="btn btn-outline flex items-center gap-2" 
+                            title="Send Email"
+                        >
                             <Mail size={18} />
+                            <span className="hidden sm:inline">Email</span>
                         </button>
                         <button className="btn btn-outline" title="Call">
                             <Phone size={18} />
@@ -214,6 +234,15 @@ const LeadDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Compose Email Modal */}
+            <ComposeModal
+                isOpen={composeOpen}
+                onClose={() => setComposeOpen(false)}
+                onSend={() => setComposeOpen(false)}
+                accounts={accounts}
+                lead={lead}
+            />
         </div>
     );
 };

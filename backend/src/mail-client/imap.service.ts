@@ -4,7 +4,18 @@ import { Repository } from 'typeorm';
 import { EmailAccount, Email, EmailDirection, Lead } from '../entities';
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
 const Imap = require('imap-simple');
-import { simpleParser, Source } from 'mailparser';
+import { simpleParser, Source, AddressObject } from 'mailparser';
+
+// Helper to extract text from AddressObject
+function getAddressText(
+  addr: AddressObject | AddressObject[] | undefined,
+): string {
+  if (!addr) return '';
+  if (Array.isArray(addr)) {
+    return addr[0]?.text || '';
+  }
+  return addr.text || '';
+}
 
 export interface ParsedEmail {
   messageId: string;
@@ -108,8 +119,8 @@ export class ImapService {
           if (existing) continue;
 
           // Try to match to a lead
-          const fromEmail = this.extractEmail(parsed.from?.text || '');
-          const toEmail = this.extractEmail(parsed.to?.text || '');
+          const fromEmail = this.extractEmail(getAddressText(parsed.from));
+          const toEmail = this.extractEmail(getAddressText(parsed.to));
 
           let lead = await this.leadRepository.findOne({
             where: { email: fromEmail },
@@ -124,8 +135,8 @@ export class ImapService {
             messageId,
             subject: parsed.subject || '(No Subject)',
             body: parsed.text || '',
-            fromAddress: fromEmail || parsed.from?.text || '',
-            toAddress: toEmail || parsed.to?.text || '',
+            fromAddress: fromEmail || getAddressText(parsed.from),
+            toAddress: toEmail || getAddressText(parsed.to),
             direction:
               fromEmail === account.email
                 ? EmailDirection.OUTBOUND

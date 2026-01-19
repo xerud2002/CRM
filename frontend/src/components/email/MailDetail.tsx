@@ -1,6 +1,11 @@
 import { Reply, ReplyAll, Forward, Trash2, MoreVertical, Star, Mail } from 'lucide-react';
 
-export const MailDetail = ({ email }: any) => {
+interface MailDetailProps {
+    email: any;
+    onReply?: () => void;
+}
+
+export const MailDetail = ({ email, onReply }: MailDetailProps) => {
     if (!email) {
         return (
             <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400 flex-col">
@@ -56,13 +61,16 @@ export const MailDetail = ({ email }: any) => {
             {/* Actions */}
             <div className="p-4 border-t border-slate-200 bg-slate-50">
                 <div className="flex space-x-3">
-                    <button className="btn btn-outline flex items-center">
+                    <button 
+                        onClick={onReply}
+                        className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center"
+                    >
                         <Reply size={16} className="mr-2" /> Reply
                     </button>
-                    <button className="btn btn-outline flex items-center">
+                    <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center">
                         <ReplyAll size={16} className="mr-2" /> Reply All
                     </button>
-                    <button className="btn btn-outline flex items-center">
+                    <button className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center">
                         <Forward size={16} className="mr-2" /> Forward
                     </button>
                 </div>

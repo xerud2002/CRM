@@ -4,12 +4,16 @@ import { MailClientController } from './mail-client.controller';
 import { MailClientService } from './mail-client.service';
 import { ImapService } from './imap.service';
 import { SmtpService } from './smtp.service';
-import { EmailAccount, Email, Lead } from '../entities';
+import { TemplatesController } from './templates.controller';
+import { TemplatesService } from './templates.service';
+import { EmailAccount, Email, EmailTemplate, Lead } from '../entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([EmailAccount, Email, Lead])],
-  controllers: [MailClientController],
-  providers: [MailClientService, ImapService, SmtpService],
-  exports: [MailClientService, ImapService],
+  imports: [
+    TypeOrmModule.forFeature([EmailAccount, Email, EmailTemplate, Lead]),
+  ],
+  controllers: [MailClientController, TemplatesController],
+  providers: [MailClientService, ImapService, SmtpService, TemplatesService],
+  exports: [MailClientService, ImapService, TemplatesService],
 })
 export class MailClientModule {}
