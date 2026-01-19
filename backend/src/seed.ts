@@ -8,30 +8,36 @@ async function seed() {
     const authService = app.get(AuthService);
 
     try {
-        // Create admin user
-        const admin = await authService.createUser(
-            'alex.barcea@holdemremovals.co.uk',
-            'Holdem2026!',
-            'Alex Barcea',
-            UserRole.ADMIN,
-        );
-        console.log('✅ Admin user created:', admin.email);
+        // Create correct admin user
+        const adminEmail = 'alex.burcea@holdemremovals.co.uk';
+        try {
+            const admin = await authService.createUser(
+                adminEmail,
+                'Holdem2026!',
+                'Alex Burcea',
+                UserRole.ADMIN,
+            );
+            console.log('✅ Admin user created:', admin.email);
+        } catch (e) {
+            console.log(`⚠️ User ${adminEmail} might already exist or error: ${e.message}`);
+        }
 
-        // Create staff user
-        const staff = await authService.createUser(
-            'ella.v@holdemremovals.co.uk',
-            'Holdem2026!',
-            'Ella V',
-            UserRole.STAFF,
-        );
-        console.log('✅ Staff user created:', staff.email);
+        // Create staff user (if not exists)
+        const staffEmail = 'ella.v@holdemremovals.co.uk';
+        try {
+            const staff = await authService.createUser(
+                staffEmail,
+                'Holdem2026!',
+                'Ella V',
+                UserRole.STAFF,
+            );
+            console.log('✅ Staff user created:', staff.email);
+        } catch (e) {
+            console.log(`⚠️ User ${staffEmail} might already exist or error: ${e.message}`);
+        }
 
     } catch (error) {
-        if (error.code === '23505') {
-            console.log('⚠️ Users already exist');
-        } else {
-            console.error('Error:', error.message);
-        }
+        console.error('General Error:', error.message);
     }
 
     await app.close();
