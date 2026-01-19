@@ -66,9 +66,9 @@ export class ImapService {
     const savedEmails: Email[] = [];
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       connection = await Imap.connect(config);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       await (connection as any).openBox(folder);
 
       // Search for recent emails (last 7 days or since last sync)
@@ -82,7 +82,7 @@ export class ImapService {
         markSeen: false,
       };
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const messages: ImapMessage[] = await (connection as any).search(
         searchCriteria,
         fetchOptions,
@@ -149,19 +149,18 @@ export class ImapService {
       }
 
       // Update last sync time
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       account.lastSyncAt = new Date();
       await this.accountRepository.save(account);
 
       this.logger.log(`Saved ${savedEmails.length} new emails`);
     } catch (error) {
       this.logger.error(
-        `IMAP error for ${account.email}: ${(error as Error).message}`,
+        `IMAP error for ${account.email}: ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     } finally {
       if (connection) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         (connection as any).end();
       }
     }

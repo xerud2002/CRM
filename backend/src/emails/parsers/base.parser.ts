@@ -70,7 +70,7 @@ export abstract class BaseEmailParser {
         try {
           const date = new Date(match[0]);
           if (!isNaN(date.getTime())) return date;
-        } catch (_e) {
+        } catch {
           // Date parsing failed, continue to next pattern
         }
       }

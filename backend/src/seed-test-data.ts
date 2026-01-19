@@ -221,7 +221,7 @@ async function seedTestData() {
       const type = randomItem(activityTypes);
 
       let description = '';
-      let metadata: any = {};
+      let metadata: Record<string, unknown> = {};
 
       switch (type) {
         case ActivityType.NOTE:
