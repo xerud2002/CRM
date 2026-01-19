@@ -1,27 +1,36 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User, UserRole, Lead, LeadStatus, LeadSource, Activity, ActivityType } from '../entities';
+import { Repository, Not, In } from 'typeorm';
+import {
+  User,
+  Lead,
+  LeadStatus,
+  LeadSource,
+  Activity,
+  ActivityType,
+} from '../entities';
 
-export interface AssignmentRule {
+interface AssignmentConditions {
+  sources?: LeadSource[];
+  postcodes?: string[];
+  minBedrooms?: number;
+  maxBedrooms?: number;
+}
+
+interface AssignmentRule {
   id: string;
   name: string;
-  enabled: boolean;
-  priority: number;
-  conditions: {
-    sources?: LeadSource[];
-    postcodes?: string[];
-    minBedrooms?: number;
-    maxBedrooms?: number;
-  };
+  conditions: AssignmentConditions;
   assignToUserId: string;
+  priority: number;
+  enabled: boolean;
 }
 
 @Injectable()
 export class AutoAssignmentService implements OnModuleInit {
-  // In-memory rules storage (could be moved to database)
+  private staffUsers: User[] = [];
+  private lastAssignedIndex = 0;
   private rules: AssignmentRule[] = [];
-  private roundRobinIndex = 0;
 
   constructor(
     @InjectRepository(User)
@@ -32,73 +41,61 @@ export class AutoAssignmentService implements OnModuleInit {
     private readonly activityRepository: Repository<Activity>,
   ) {}
 
-  async onModuleInit() {
-    // Load default rules on startup
-    await this.loadDefaultRules();
+  async onModuleInit(): Promise<void> {
+    await this.loadStaffUsers();
   }
 
-  private async loadDefaultRules() {
-    // Get active staff users
-    const staffUsers = await this.userRepository.find({
+  private async loadStaffUsers(): Promise<void> {
+    this.staffUsers = await this.userRepository.find({
       where: { isActive: true },
     });
-
-    // Default: round-robin assignment to all active staff
-    if (staffUsers.length > 0) {
-      console.log(`Auto-assignment service initialized with ${staffUsers.length} staff users`);
-    }
+    console.log(
+      `Auto-assignment service initialized with ${this.staffUsers.length} staff users`,
+    );
   }
 
-  async assignLead(lead: Lead): Promise<Lead | null> {
-    // Skip if already assigned
-    if (lead.assignedToId) {
-      return null;
-    }
-
-    // Try rule-based assignment first
-    for (const rule of this.rules.filter(r => r.enabled).sort((a, b) => a.priority - b.priority)) {
+  async assignLead(lead: Lead): Promise<Lead> {
+    for (const rule of this.rules
+      .filter((r) => r.enabled)
+      .sort((a, b) => a.priority - b.priority)) {
       if (this.matchesRule(lead, rule)) {
-        const user = await this.userRepository.findOne({
-          where: { id: rule.assignToUserId, isActive: true },
-        });
-        if (user) {
-          return this.performAssignment(lead, user, `Rule: ${rule.name}`);
+        const assignee = this.staffUsers.find(
+          (u) => u.id === rule.assignToUserId,
+        );
+        if (assignee) {
+          return this.performAssignment(lead, assignee, `Rule: ${rule.name}`);
         }
       }
     }
-
-    // Fall back to round-robin
-    return this.assignRoundRobin(lead);
+    return this.roundRobinAssign(lead);
   }
 
   private matchesRule(lead: Lead, rule: AssignmentRule): boolean {
     const { conditions } = rule;
 
-    // Check source
     if (conditions.sources && conditions.sources.length > 0) {
       if (!conditions.sources.includes(lead.source)) {
         return false;
       }
     }
 
-    // Check postcode prefix
     if (conditions.postcodes && conditions.postcodes.length > 0) {
       const leadPostcode = (lead.fromPostcode || '').toUpperCase();
-      const matches = conditions.postcodes.some(pc => 
-        leadPostcode.startsWith(pc.toUpperCase())
+      const matches = conditions.postcodes.some((pc) =>
+        leadPostcode.startsWith(pc.toUpperCase()),
       );
       if (!matches) {
         return false;
       }
     }
 
-    // Check bedrooms
-    if (conditions.minBedrooms !== undefined && lead.bedrooms !== undefined) {
+    if (conditions.minBedrooms !== undefined && lead.bedrooms) {
       if (lead.bedrooms < conditions.minBedrooms) {
         return false;
       }
     }
-    if (conditions.maxBedrooms !== undefined && lead.bedrooms !== undefined) {
+
+    if (conditions.maxBedrooms !== undefined && lead.bedrooms) {
       if (lead.bedrooms > conditions.maxBedrooms) {
         return false;
       }
@@ -107,49 +104,47 @@ export class AutoAssignmentService implements OnModuleInit {
     return true;
   }
 
-  private async assignRoundRobin(lead: Lead): Promise<Lead | null> {
-    const staffUsers = await this.userRepository.find({
-      where: { isActive: true },
-      order: { name: 'ASC' },
-    });
-
-    if (staffUsers.length === 0) {
-      return null;
+  private async roundRobinAssign(lead: Lead): Promise<Lead> {
+    if (this.staffUsers.length === 0) {
+      return lead;
     }
 
-    // Get user with least active leads (load balancing)
-    const userLoads = await Promise.all(
-      staffUsers.map(async (user) => {
+    const workloads = await Promise.all(
+      this.staffUsers.map(async (user) => {
         const count = await this.leadRepository.count({
           where: {
             assignedToId: user.id,
-            status: LeadStatus.NEW,
+            status: Not(In([LeadStatus.WON, LeadStatus.LOST])),
           },
         });
         return { user, count };
-      })
+      }),
     );
 
-    // Sort by load (ascending) and pick the least loaded
-    userLoads.sort((a, b) => a.count - b.count);
-    const selectedUser = userLoads[0].user;
+    workloads.sort((a, b) => a.count - b.count);
+    const selectedUser = workloads[0].user;
 
-    return this.performAssignment(lead, selectedUser, 'Round-robin (load balanced)');
+    return this.performAssignment(
+      lead,
+      selectedUser,
+      'Round-robin (load balanced)',
+    );
   }
 
-  private async performAssignment(lead: Lead, user: User, reason: string): Promise<Lead> {
+  private async performAssignment(
+    lead: Lead,
+    user: User,
+    reason: string,
+  ): Promise<Lead> {
     lead.assignedToId = user.id;
     lead.assignedTo = user;
-    
     const updatedLead = await this.leadRepository.save(lead);
 
-    // Log activity
     await this.activityRepository.save({
       leadId: lead.id,
-      type: ActivityType.STATUS_CHANGE,
-      description: `Auto-assigned to ${user.name} (${reason})`,
+      type: ActivityType.ASSIGNMENT,
+      description: `Lead auto-assigned to ${user.name}`,
       metadata: {
-        type: 'auto_assignment',
         assignedToId: user.id,
         assignedToName: user.name,
         reason,
@@ -159,12 +154,11 @@ export class AutoAssignmentService implements OnModuleInit {
     return updatedLead;
   }
 
-  // Rule management methods
-  async getRules(): Promise<AssignmentRule[]> {
+  getRules(): AssignmentRule[] {
     return this.rules;
   }
 
-  async addRule(rule: Omit<AssignmentRule, 'id'>): Promise<AssignmentRule> {
+  addRule(rule: Omit<AssignmentRule, 'id'>): AssignmentRule {
     const newRule: AssignmentRule = {
       ...rule,
       id: `rule_${Date.now()}`,
@@ -173,79 +167,88 @@ export class AutoAssignmentService implements OnModuleInit {
     return newRule;
   }
 
-  async updateRule(id: string, updates: Partial<AssignmentRule>): Promise<AssignmentRule | null> {
-    const index = this.rules.findIndex(r => r.id === id);
+  updateRule(
+    id: string,
+    updates: Partial<AssignmentRule>,
+  ): AssignmentRule | null {
+    const index = this.rules.findIndex((r) => r.id === id);
     if (index === -1) return null;
-    
     this.rules[index] = { ...this.rules[index], ...updates };
     return this.rules[index];
   }
 
-  async deleteRule(id: string): Promise<boolean> {
-    const index = this.rules.findIndex(r => r.id === id);
+  deleteRule(id: string): boolean {
+    const index = this.rules.findIndex((r) => r.id === id);
     if (index === -1) return false;
-    
     this.rules.splice(index, 1);
     return true;
   }
 
-  async getStaffWorkload() {
-    const staffUsers = await this.userRepository.find({
-      where: { isActive: true },
-    });
-
-    return Promise.all(
-      staffUsers.map(async (user) => {
+  async getStaffWorkload(): Promise<
+    Array<{
+      userId: string;
+      name: string;
+      activeLeads: number;
+      totalAssigned: number;
+    }>
+  > {
+    const result = await Promise.all(
+      this.staffUsers.map(async (user) => {
         const activeLeads = await this.leadRepository.count({
           where: {
             assignedToId: user.id,
-            status: LeadStatus.NEW,
+            status: Not(In([LeadStatus.WON, LeadStatus.LOST])),
           },
         });
-        const totalLeads = await this.leadRepository.count({
+        const totalAssigned = await this.leadRepository.count({
           where: { assignedToId: user.id },
         });
-
         return {
           userId: user.id,
           name: user.name,
           activeLeads,
-          totalLeads,
+          totalAssigned,
         };
-      })
+      }),
     );
+    return result;
   }
 
-  // Manual assignment
-  async manualAssign(leadId: string, userId: string, assignedByUserId?: string): Promise<Lead> {
-    const lead = await this.leadRepository.findOne({ where: { id: leadId } });
+  async manualAssign(
+    leadId: string,
+    userId: string,
+    assignedByUserId?: string,
+  ): Promise<Lead> {
+    const lead = await this.leadRepository.findOne({
+      where: { id: leadId },
+      relations: ['assignedTo'],
+    });
     if (!lead) {
-      throw new Error('Lead not found');
+      throw new NotFoundException('Lead not found');
     }
 
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
-    const previousAssignee = lead.assignedToId;
+    const previousAssignee = lead.assignedTo?.name;
     lead.assignedToId = user.id;
     lead.assignedTo = user;
-
     const updatedLead = await this.leadRepository.save(lead);
 
     await this.activityRepository.save({
       leadId: lead.id,
-      type: ActivityType.STATUS_CHANGE,
-      description: previousAssignee 
-        ? `Reassigned to ${user.name}`
-        : `Assigned to ${user.name}`,
       userId: assignedByUserId,
+      type: ActivityType.ASSIGNMENT,
+      description: previousAssignee
+        ? `Lead reassigned from ${previousAssignee} to ${user.name}`
+        : `Lead manually assigned to ${user.name}`,
       metadata: {
-        type: 'manual_assignment',
         assignedToId: user.id,
         assignedToName: user.name,
-        previousAssigneeId: previousAssignee,
+        previousAssignee,
+        manual: true,
       },
     });
 

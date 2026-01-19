@@ -47,6 +47,7 @@ export const QuotesList = ({ leadId, onCreateQuote }: QuotesListProps) => {
 
   useEffect(() => {
     fetchQuotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadId]);
 
   if (loading) {

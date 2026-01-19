@@ -1,89 +1,100 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
 import { Lead, Activity, ActivityType } from '../entities';
 import { SendSmsDto, SmsTemplate } from './dto/sms.dto';
 
-// SMS templates with variable placeholders
-const SMS_TEMPLATES = {
-  [SmsTemplate.APPOINTMENT_REMINDER]: `Hi {{firstName}}, this is a reminder of your survey appointment with Holdem Removals on {{date}} at {{time}}. Reply YES to confirm or call us on 01onal if you need to reschedule.`,
-  [SmsTemplate.QUOTE_FOLLOW_UP]: `Hi {{firstName}}, we sent you a quote for your move from {{fromPostcode}} to {{toPostcode}}. Any questions? Reply to this message or call us on 01onal. - Holdem Removals`,
-  [SmsTemplate.BOOKING_CONFIRMATION]: `Hi {{firstName}}, your move with Holdem Removals is confirmed for {{date}}. Our team will arrive at {{time}}. If you have any questions, call us on 01onal.`,
-  [SmsTemplate.CUSTOM]: '',
-};
+interface TwilioClient {
+  messages: {
+    create(params: {
+      body: string;
+      from: string;
+      to: string;
+    }): Promise<{ sid: string }>;
+  };
+}
 
 interface SmsResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  simulated?: boolean;
 }
 
 @Injectable()
 export class SmsService {
-  private twilioClient: any = null;
-  private fromNumber: string;
-  private isConfigured: boolean = false;
+  private twilioClient: TwilioClient | null = null;
+  private fromNumber = '';
 
   constructor(
+    private readonly configService: ConfigService,
     @InjectRepository(Lead)
     private readonly leadRepository: Repository<Lead>,
     @InjectRepository(Activity)
     private readonly activityRepository: Repository<Activity>,
-    private readonly configService: ConfigService,
   ) {
-    this.initializeTwilio();
+    void this.initializeTwilio();
   }
 
-  private async initializeTwilio() {
+  private async initializeTwilio(): Promise<void> {
     const accountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN');
-    this.fromNumber = this.configService.get<string>('TWILIO_PHONE_NUMBER') || '';
+    this.fromNumber =
+      this.configService.get<string>('TWILIO_PHONE_NUMBER') || '';
 
-    if (accountSid && authToken && this.fromNumber) {
+    if (accountSid && authToken) {
       try {
-        const twilio = await import('twilio');
-        this.twilioClient = twilio.default(accountSid, authToken);
-        this.isConfigured = true;
-        console.log('Twilio SMS service initialized');
-      } catch (error) {
-        console.warn('Twilio package not installed. SMS sending will be simulated.');
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const twilio = require('twilio') as (
+          sid: string,
+          token: string,
+        ) => TwilioClient;
+        this.twilioClient = twilio(accountSid, authToken);
+      } catch {
+        console.warn(
+          'Twilio package not installed. SMS sending will be simulated.',
+        );
       }
     } else {
-      console.warn('Twilio credentials not configured. SMS sending will be simulated.');
+      console.warn(
+        'Twilio credentials not configured. SMS sending will be simulated.',
+      );
     }
   }
 
-  async sendSms(dto: SendSmsDto, userId: string): Promise<SmsResult> {
+  async sendSms(
+    dto: SendSmsDto,
+    userId: string,
+  ): Promise<SmsResult & { lead?: Lead }> {
     const lead = await this.leadRepository.findOne({
       where: { id: dto.leadId },
     });
-
     if (!lead) {
       throw new NotFoundException('Lead not found');
     }
 
-    if (!lead.phone) {
-      throw new BadRequestException('Lead has no phone number');
+    const phoneNumber = dto.to || lead.phone;
+    if (!phoneNumber) {
+      throw new BadRequestException('No phone number available');
     }
 
-    // Format phone number for UK
-    let phoneNumber = lead.phone.replace(/\s+/g, '').replace(/^0/, '+44');
-    if (!phoneNumber.startsWith('+')) {
-      phoneNumber = '+44' + phoneNumber;
-    }
-
-    // Process message with template variables
     let message = dto.message;
     if (dto.template && dto.template !== SmsTemplate.CUSTOM) {
-      message = this.processTemplate(SMS_TEMPLATES[dto.template], lead);
-    } else {
-      message = this.processTemplate(message, lead);
+      message = this.fillTemplate(dto.template, lead);
+    }
+
+    if (!message) {
+      throw new BadRequestException('Message content is required');
     }
 
     let result: SmsResult;
 
-    if (this.isConfigured && this.twilioClient) {
+    if (this.twilioClient && this.fromNumber) {
       try {
         const twilioResult = await this.twilioClient.messages.create({
           body: message,
@@ -95,83 +106,109 @@ export class SmsService {
           success: true,
           messageId: twilioResult.sid,
         };
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as Error;
         result = {
           success: false,
-          error: error.message || 'Failed to send SMS',
+          error: err.message || 'Failed to send SMS',
         };
       }
     } else {
-      // Simulate SMS sending for demo/development
-      console.log(`[SMS SIMULATION] To: ${phoneNumber}, Message: ${message}`);
+      console.log(`[SIMULATED SMS] To: ${phoneNumber}, Message: ${message}`);
       result = {
         success: true,
         messageId: `sim_${Date.now()}`,
+        simulated: true,
       };
     }
 
-    // Log activity
     await this.activityRepository.save({
-      type: ActivityType.NOTE,
-      description: result.success 
-        ? `SMS sent: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"`
-        : `SMS failed: ${result.error}`,
       leadId: dto.leadId,
       userId,
+      type: ActivityType.SMS,
+      description: result.success
+        ? `SMS sent to ${phoneNumber}`
+        : `Failed to send SMS: ${result.error}`,
       metadata: {
-        type: 'sms',
-        direction: 'outbound',
         template: dto.template,
         phoneNumber,
-        success: result.success,
+        messagePreview: message.substring(0, 100),
+        status: result.success ? 'sent' : 'failed',
         messageId: result.messageId,
-        error: result.error,
+        simulated: result.simulated,
       },
     });
 
-    return result;
+    return { ...result, lead };
   }
 
-  private processTemplate(template: string, lead: Lead): string {
-    return template
-      .replace(/\{\{firstName\}\}/g, lead.firstName || 'there')
-      .replace(/\{\{lastName\}\}/g, lead.lastName || '')
-      .replace(/\{\{fullName\}\}/g, `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Customer')
+  private fillTemplate(template: SmsTemplate, lead: Lead): string {
+    const templates: Record<SmsTemplate, string> = {
+      [SmsTemplate.APPOINTMENT_REMINDER]:
+        'Hi {{firstName}}, reminder: your assessment is scheduled for {{date}}. Reply YES to confirm. - Holdem Removals',
+      [SmsTemplate.QUOTE_FOLLOW_UP]:
+        'Hi {{firstName}}, we sent you a quote for your move. Any questions? Call us on 01onal or reply to this message. - Holdem Removals',
+      [SmsTemplate.BOOKING_CONFIRMATION]:
+        'Hi {{firstName}}, your move on {{moveDate}} is confirmed! Our team will arrive at {{startTime}}. - Holdem Removals',
+      [SmsTemplate.CUSTOM]: '',
+    };
+
+    const content = templates[template] || '';
+    return content
+      .replace(/\{\{firstName\}\}/g, lead.firstName || 'Customer')
+      .replace(
+        /\{\{fullName\}\}/g,
+        `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Customer',
+      )
       .replace(/\{\{fromPostcode\}\}/g, lead.fromPostcode || '')
       .replace(/\{\{toPostcode\}\}/g, lead.toPostcode || '')
-      .replace(/\{\{fromAddress\}\}/g, lead.fromAddress || '')
-      .replace(/\{\{toAddress\}\}/g, lead.toAddress || '')
-      .replace(/\{\{moveDate\}\}/g, lead.moveDate ? new Date(lead.moveDate).toLocaleDateString('en-GB') : 'TBC')
-      .replace(/\{\{date\}\}/g, lead.moveDate ? new Date(lead.moveDate).toLocaleDateString('en-GB') : 'TBC')
-      .replace(/\{\{time\}\}/g, '8:00 AM'); // Default time, could be made dynamic
+      .replace(
+        /\{\{moveDate\}\}/g,
+        lead.moveDate
+          ? new Date(lead.moveDate).toLocaleDateString('en-GB')
+          : 'TBC',
+      )
+      .replace(
+        /\{\{date\}\}/g,
+        lead.moveDate
+          ? new Date(lead.moveDate).toLocaleDateString('en-GB')
+          : 'TBC',
+      )
+      .replace(/\{\{startTime\}\}/g, lead.startTime || 'morning');
   }
 
-  getTemplates() {
-    return Object.entries(SMS_TEMPLATES)
-      .filter(([key]) => key !== SmsTemplate.CUSTOM)
-      .map(([key, content]) => ({
-        id: key,
-        name: key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
-        content,
-        variables: this.extractVariables(content),
+  getTemplates(): Array<{ id: string; name: string; content: string }> {
+    return Object.entries(SmsTemplate)
+      .filter(([key]) => key !== 'CUSTOM')
+      .map(([key, value]) => ({
+        id: value,
+        name: key.replace(/_/g, ' ').toLowerCase(),
+        content: this.getTemplatePreview(value),
       }));
   }
 
-  private extractVariables(template: string): string[] {
-    const matches = template.match(/\{\{(\w+)\}\}/g) || [];
-    return [...new Set(matches.map((m) => m.replace(/\{\{|\}\}/g, '')))];
-  }
-
-  previewSms(template: SmsTemplate, lead: Partial<Lead>): string {
-    const templateContent = SMS_TEMPLATES[template] || '';
-    return this.processTemplate(templateContent, lead as Lead);
-  }
-
-  getStatus() {
-    return {
-      configured: this.isConfigured,
-      fromNumber: this.isConfigured ? this.fromNumber : null,
-      provider: 'twilio',
+  private getTemplatePreview(template: SmsTemplate): string {
+    const previews: Record<SmsTemplate, string> = {
+      [SmsTemplate.APPOINTMENT_REMINDER]:
+        'Hi {{firstName}}, reminder: your assessment is scheduled...',
+      [SmsTemplate.QUOTE_FOLLOW_UP]:
+        'Hi {{firstName}}, we sent you a quote for your move...',
+      [SmsTemplate.BOOKING_CONFIRMATION]:
+        'Hi {{firstName}}, your move on {{moveDate}} is confirmed...',
+      [SmsTemplate.CUSTOM]: 'Custom message',
     };
+    return previews[template] || '';
+  }
+
+  async previewSms(leadId: string, template: SmsTemplate): Promise<string> {
+    const lead = await this.leadRepository.findOne({ where: { id: leadId } });
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+    return this.fillTemplate(template, lead);
+  }
+
+  isConfigured(): boolean {
+    return this.twilioClient !== null && this.fromNumber !== '';
   }
 }

@@ -4,7 +4,6 @@
  */
 
 import { EmailParserFactory } from './emails/parsers';
-import { LeadSource } from './entities';
 
 const parserFactory = new EmailParserFactory();
 

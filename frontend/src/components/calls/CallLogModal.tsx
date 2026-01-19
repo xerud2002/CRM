@@ -121,8 +121,9 @@ export const CallLogModal = ({ isOpen, onClose, leadId: initialLeadId, leadName,
 
             onCallLogged?.();
             onClose();
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to log call');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { message?: string } } };
+            setError(axiosError.response?.data?.message || 'Failed to log call');
         } finally {
             setSubmitting(false);
         }

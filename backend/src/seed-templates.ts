@@ -409,4 +409,4 @@ async function seedTemplates() {
   }
 }
 
-seedTemplates();
+void seedTemplates();

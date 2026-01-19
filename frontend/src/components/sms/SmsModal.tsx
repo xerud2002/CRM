@@ -90,8 +90,9 @@ export const SmsModal = ({ isOpen, onClose, leadId, leadName, leadPhone, onSmsSe
                 onClose();
                 setSuccess(false);
             }, 2000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to send SMS');
+        } catch (err: unknown) {
+            const axiosError = err as { response?: { data?: { message?: string } } };
+            setError(axiosError.response?.data?.message || 'Failed to send SMS');
         } finally {
             setSending(false);
         }

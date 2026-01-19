@@ -52,12 +52,6 @@ export const QuoteDetailModal = ({ isOpen, onClose, quoteId, onUpdate }: QuoteDe
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && quoteId) {
-      fetchQuote();
-    }
-  }, [isOpen, quoteId]);
-
   const fetchQuote = async () => {
     try {
       setLoading(true);
@@ -68,6 +62,14 @@ export const QuoteDetailModal = ({ isOpen, onClose, quoteId, onUpdate }: QuoteDe
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (isOpen && quoteId) {
+      fetchQuote();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, quoteId]);
   };
 
   const handleSend = async () => {
