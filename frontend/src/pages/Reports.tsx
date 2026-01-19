@@ -10,6 +10,8 @@ import {
     MapPin,
     RefreshCw,
     ArrowDownRight,
+    Download,
+    ChevronDown,
 } from 'lucide-react';
 
 interface ReportSummary {
@@ -79,6 +81,32 @@ const Reports = () => {
     const [locations, setLocations] = useState<LocationData[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'funnel' | 'staff' | 'locations'>('overview');
+    const [exportMenuOpen, setExportMenuOpen] = useState(false);
+
+    const handleExport = (type: 'leads' | 'quotes' | 'calls' | 'assessments' | 'summary') => {
+        const baseUrl = 'http://localhost:3001/api/reports/export';
+        const token = localStorage.getItem('token');
+        const url = `${baseUrl}/${type}?period=${period}`;
+        
+        // Create a temporary link to trigger download with auth header
+        fetch(url, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then(res => res.blob())
+            .then(blob => {
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `${type}-export-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(downloadUrl);
+            })
+            .catch(err => console.error('Export failed:', err));
+        
+        setExportMenuOpen(false);
+    };
 
     const fetchReports = useCallback(async () => {
         setLoading(true);
@@ -143,6 +171,51 @@ const Reports = () => {
                         <RefreshCw size={18} />
                         Refresh
                     </button>
+                    {/* Export Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setExportMenuOpen(!exportMenuOpen)}
+                            className="btn btn-primary flex items-center gap-2"
+                        >
+                            <Download size={18} />
+                            Export CSV
+                            <ChevronDown size={16} />
+                        </button>
+                        {exportMenuOpen && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-2 z-50">
+                                <button
+                                    onClick={() => handleExport('summary')}
+                                    className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                >
+                                    Summary Report
+                                </button>
+                                <button
+                                    onClick={() => handleExport('leads')}
+                                    className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                >
+                                    Leads Data
+                                </button>
+                                <button
+                                    onClick={() => handleExport('quotes')}
+                                    className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                >
+                                    Quotes Data
+                                </button>
+                                <button
+                                    onClick={() => handleExport('calls')}
+                                    className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                >
+                                    Calls Data
+                                </button>
+                                <button
+                                    onClick={() => handleExport('assessments')}
+                                    className="w-full px-4 py-2 text-left hover:bg-slate-50 text-sm"
+                                >
+                                    Assessments Data
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

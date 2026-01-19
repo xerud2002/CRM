@@ -1,67 +1,67 @@
 # CRM System Development - HubSpot Replacement
 
 ## Phase 1 — Planning & Architecture
-- [/] Confirm stack: NestJS + PostgreSQL + React
+- [x] Confirm stack: NestJS + PostgreSQL + React
 - [ ] Choose hosting (Hetzner / DigitalOcean)
-- [ ] Create Git repository
-- [ ] Setup dev & staging environments
+- [x] Create Git repository
+- [/] Setup dev & staging environments (localhost works)
 
 ## Phase 2 — Database & Core Models
-- [ ] Create PostgreSQL database
-- [ ] Implement tables (users, leads, activities, emails, calls, email_templates, tasks)
-- [ ] Add indexes (email, phone, status)
-- [ ] Create migration scripts
-- [ ] Define business rules (lead lifecycle, contact status, automation triggers, lost lead rules)
+- [x] Create PostgreSQL database (Supabase)
+- [x] Implement tables (users, leads, activities, emails, calls, email_templates, tasks)
+- [x] Add indexes (email, phone, status)
+- [x] Create migration scripts (TypeORM synchronize)
+- [x] Define business rules (lead lifecycle, contact status, automation triggers, lost lead rules)
 
 ## Phase 3 — Authentication & Users
-- [ ] Implement JWT login
-- [ ] Roles: admin / staff
-- [ ] User assignment to leads
+- [x] Implement JWT login
+- [x] Roles: admin / staff
+- [x] User assignment to leads
 
 ## Phase 4 — Leads Management
-- [ ] Create lead CRUD API
-- [ ] Lead list with filters
-- [ ] Lead detail view
-- [ ] Status & milestone updates
-- [ ] Duplicate detection (email / phone)
+- [x] Create lead CRUD API
+- [x] Lead list with filters
+- [x] Lead detail view
+- [x] Status & milestone updates
+- [x] Duplicate detection (email / phone)
 
 ## Phase 5 — Activity Timeline
-- [ ] Auto-log: Emails, Calls, Status changes
-- [ ] Manual notes
-- [ ] Chronological timeline UI
+- [x] Auto-log: Emails, Calls, Status changes
+- [x] Manual notes
+- [x] Chronological timeline UI
 
 ## Phase 6 — Email Client (Replaces Thunderbird)
-- [ ] Email client UI (multi-account inbox like Thunderbird)
-- [ ] Configure email accounts:
+- [x] Email client UI (multi-account inbox like Thunderbird)
+- [/] Configure email accounts: (code ready, needs production credentials)
   - [ ] alex.barcea@holdemremovals.co.uk
   - [ ] holdemremovals@gmail.com
   - [ ] cr@holdemremovals.co.uk
   - [ ] quote@holdemremovals.co.uk
   - [ ] ella.v@holdemremovals.co.uk
   - [ ] office@holdemremovals.co.uk
-- [ ] IMAP sync (fetch emails)
-- [ ] SMTP send (compose, reply, forward)
-- [ ] Unified inbox view
-- [ ] Email templates
-- [ ] Auto-link emails to leads
-- [ ] Lead source parsers:
-  - [ ] CompareMyMove (accounts@comparemymove.com)
-  - [ ] ReallyMoving (manuallead@reallymoving.com)
-  - [ ] GetAMover (info@getamover.co.uk)
-  - [ ] Internal website quotes
+- [x] IMAP sync (fetch emails)
+- [x] SMTP send (compose, reply, forward)
+- [x] Unified inbox view
+- [x] Email templates
+- [x] Auto-link emails to leads
+- [x] Lead source parsers:
+  - [x] CompareMyMove (accounts@comparemymove.com)
+  - [x] ReallyMoving (manuallead@reallymoving.com)
+  - [x] GetAMover (info@getamover.co.uk)
+  - [x] Internal website quotes
   - [ ] Video survey bookings (self-service scheduler)
-- [ ] Parse inbound emails & update contact_status
-- [ ] Assessments module (dual calendar):
-  - [ ] Video calls calendar (auto-populated + manual)
-  - [ ] In-person assessments calendar (manual only)
-  - [ ] Assessment completion & notes
-  - [ ] Confirmation & reminder emails
+- [x] Parse inbound emails & update contact_status
+- [x] Assessments module (dual calendar):
+  - [x] Video calls calendar (auto-populated + manual)
+  - [x] In-person assessments calendar (manual only)
+  - [x] Assessment completion & notes
+  - [x] Confirmation & reminder emails
 
 ## Phase 7 — Telephony (Tamar Integration)
-- [ ] Get Tamar API / SIP credentials
+- [ ] Get Tamar API / SIP credentials ⚠️ BLOCKED - contact Tamar at 0800 772 0000
 - [ ] Click-to-call from CRM
 - [ ] Webhook endpoint for call events
-- [ ] Call logging & missed call handling
+- [x] Call logging & missed call handling (manual logging implemented)
 
 ## Phase 8 — Data Migration (HubSpot → CRM)
 - [ ] Field mapping (HubSpot → CRM)
@@ -70,19 +70,15 @@
 - [ ] Validation & spot-checks
 
 ## Phase 9 — Dashboard & Reporting
-- [ ] Contact metrics (contacted, responded by email/call)
-- [ ] Conversion funnel (lead → survey → quote → accepted)
-- [ ] Location filtering (postcode: NN1, NN3, MK, PE1, etc.)
-- [ ] Export reports to CSV
+- [x] Contact metrics (contacted, responded by email/call)
+- [x] Conversion funnel (lead → survey → quote → accepted)
+- [x] Location filtering (postcode: NN1, NN3, MK, PE1, etc.)
+- [x] Export reports to CSV
 
-## Phase 10 — Data Migration (HubSpot → CRM)
-- [ ] Field mapping (HubSpot → CRM)
-- [ ] Test import (500 contacts)
-- [ ] Full migration (50k contacts)
-- [ ] Validation & spot-checks
+## Phase 10 — ~~Data Migration (HubSpot → CRM)~~ (duplicate of Phase 8)
 
 ## Phase 11 — Deployment
-- [ ] Localhost testing
+- [x] Localhost testing
 - [ ] Vercel staging deployment
 - [ ] Production deployment
 

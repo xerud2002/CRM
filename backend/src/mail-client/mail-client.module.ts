@@ -47,6 +47,7 @@ import {
   exports: [
     MailClientService,
     ImapService,
+    SmtpService,
     TemplatesService,
     ThunderbirdImportService,
     EmailProcessorService,

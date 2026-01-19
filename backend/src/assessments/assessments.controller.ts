@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AssessmentsService } from './assessments.service';
+import { AssessmentEmailService } from './assessment-email.service';
 import {
   CreateAssessmentDto,
   UpdateAssessmentDto,
@@ -26,7 +27,10 @@ interface RequestWithUser {
 @Controller('assessments')
 @UseGuards(JwtAuthGuard)
 export class AssessmentsController {
-  constructor(private readonly assessmentsService: AssessmentsService) {}
+  constructor(
+    private readonly assessmentsService: AssessmentsService,
+    private readonly assessmentEmailService: AssessmentEmailService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateAssessmentDto, @Request() req: RequestWithUser) {
@@ -92,5 +96,21 @@ export class AssessmentsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.assessmentsService.remove(id);
+  }
+
+  // Email notification endpoints
+  @Post(':id/send-confirmation')
+  sendConfirmation(@Param('id') id: string) {
+    return this.assessmentEmailService.sendConfirmation(id);
+  }
+
+  @Post(':id/send-reminder')
+  sendReminder(@Param('id') id: string) {
+    return this.assessmentEmailService.sendReminder(id);
+  }
+
+  @Post('reminders/send-pending')
+  sendPendingReminders() {
+    return this.assessmentEmailService.sendPendingReminders();
   }
 }
