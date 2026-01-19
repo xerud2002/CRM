@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
+import Email from './pages/Email';
 import './styles/global.css';
 
 // Protected Route Wrapper
@@ -37,7 +38,7 @@ function App() {
           }>
             <Route index element={<Dashboard />} />
             <Route path="leads" element={<Leads />} />
-            <Route path="email" element={<div className="p-4">Email Component (Coming Soon)</div>} />
+            <Route path="email" element={<Email />} />
             <Route path="calendar" element={<div className="p-4">Calendar Component (Coming Soon)</div>} />
             <Route path="quotes" element={<div className="p-4">Quotes Component (Coming Soon)</div>} />
             <Route path="calls" element={<div className="p-4">Calls Component (Coming Soon)</div>} />
