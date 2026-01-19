@@ -11,5 +11,5 @@ export declare class MailClientService {
     constructor(accountRepository: Repository<EmailAccount>, emailRepository: Repository<Email>, leadRepository: Repository<Lead>, smtpService: SmtpService, imapService: ImapService);
     getAccounts(): Promise<EmailAccount[]>;
     getInbox(accountId: string, page?: number, limit?: number): Promise<never[]>;
-    sendEmail(accountId: string, to: string, subject: string, body: string, attachments?: any[]): Promise<Email[]>;
+    sendEmail(accountId: string, to: string, subject: string, body: string, attachments?: any[]): Promise<Email>;
 }

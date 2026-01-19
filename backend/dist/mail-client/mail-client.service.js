@@ -41,6 +41,9 @@ let MailClientService = class MailClientService {
     async sendEmail(accountId, to, subject, body, attachments) {
         const result = await this.smtpService.sendEmail(accountId, to, subject, body, attachments);
         const account = await this.accountRepository.findOne({ where: { id: accountId } });
+        if (!account) {
+            throw new Error('Email account not found');
+        }
         const lead = await this.leadRepository.findOne({ where: { email: to } });
         const email = this.emailRepository.create({
             direction: entities_1.EmailDirection.OUTBOUND,
@@ -50,7 +53,7 @@ let MailClientService = class MailClientService {
             toAddress: to,
             messageId: result.messageId,
             sentAt: new Date(),
-            lead: lead || null,
+            lead: lead || undefined,
         });
         return this.emailRepository.save(email);
     }

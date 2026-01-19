@@ -1,12 +1,14 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Leads from './pages/Leads';
 import './styles/global.css';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -34,5 +36,19 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<Dashboard />} />
-            <Route path="leads" element={<div className="p-4">Leads Component (Coming Soon)</div>} />
-            <Route path="email" element={<div className="p-4">Email Compone
+            <Route path="leads" element={<Leads />} />
+            <Route path="email" element={<div className="p-4">Email Component (Coming Soon)</div>} />
+            <Route path="calendar" element={<div className="p-4">Calendar Component (Coming Soon)</div>} />
+            <Route path="quotes" element={<div className="p-4">Quotes Component (Coming Soon)</div>} />
+            <Route path="calls" element={<div className="p-4">Calls Component (Coming Soon)</div>} />
+            <Route path="settings" element={<div className="p-4">Settings Component (Coming Soon)</div>} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;

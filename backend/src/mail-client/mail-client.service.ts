@@ -35,6 +35,9 @@ export class MailClientService {
 
         // 2. Save to DB
         const account = await this.accountRepository.findOne({ where: { id: accountId } });
+        if (!account) {
+            throw new Error('Email account not found');
+        }
 
         // 3. Try to link to a lead
         const lead = await this.leadRepository.findOne({ where: { email: to } });
@@ -47,7 +50,7 @@ export class MailClientService {
             toAddress: to,
             messageId: result.messageId,
             sentAt: new Date(),
-            lead: lead || null,
+            lead: lead || undefined,
         });
 
         return this.emailRepository.save(email);

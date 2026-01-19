@@ -4,8 +4,8 @@ export declare class SmtpService {
     private readonly accountRepository;
     constructor(accountRepository: Repository<EmailAccount>);
     sendEmail(accountId: string, to: string, subject: string, html: string, attachments?: any[]): Promise<{
-        messageId: any;
-        accepted: any;
-        rejected: any;
+        messageId: string;
+        accepted: (string | import("nodemailer/lib/mailer").Address)[];
+        rejected: (string | import("nodemailer/lib/mailer").Address)[];
     }>;
 }

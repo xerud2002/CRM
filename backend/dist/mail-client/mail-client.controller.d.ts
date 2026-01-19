@@ -8,5 +8,5 @@ export declare class MailClientController {
         to: string;
         subject: string;
         html: string;
-    }): Promise<import("../entities").Email[]>;
+    }): Promise<import("../entities").Email>;
 }
