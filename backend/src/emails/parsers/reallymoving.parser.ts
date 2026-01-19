@@ -12,11 +12,11 @@ import { LeadSource } from '../../entities';
  * Format: Plain text
  */
 export class ReallyMovingParser extends BaseEmailParser {
-  canParse(from: string, subject: string): boolean {
+  canParse(from: string, _subject: string): boolean {
     return from.toLowerCase().includes('reallymoving.com');
   }
 
-  parse(subject: string, body: string, htmlBody?: string): EmailParserResult {
+  parse(subject: string, body: string, _htmlBody?: string): EmailParserResult {
     try {
       const text = body; // ReallyMoving uses plain text
       const lead: ParsedLeadData = {

@@ -1,21 +1,25 @@
-import { IsOptional, IsString, IsEnum, IsArray } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsOptional, IsArray, IsEnum, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { LeadSource } from '../../entities';
 
 export class DashboardFilterDto {
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.split(',') : value,
   )
   @IsArray()
   postcodes?: string[];
 
   @IsOptional()
-  @Type(() => Date)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? new Date(value) : value,
+  )
   dateFrom?: Date;
 
   @IsOptional()
-  @Type(() => Date)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? new Date(value) : value,
+  )
   dateTo?: Date;
 
   @IsOptional()

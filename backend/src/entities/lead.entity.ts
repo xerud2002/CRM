@@ -8,8 +8,13 @@ import {
   OneToMany,
   JoinColumn,
   Index,
+  type Relation,
 } from 'typeorm';
 import { User } from './user.entity';
+import type { Activity } from './activity.entity';
+import type { Email } from './email.entity';
+import type { Call } from './call.entity';
+import type { Assessment } from './assessment.entity';
 
 export enum LeadStatus {
   PENDING = 'pending',
@@ -149,16 +154,16 @@ export class Lead {
   lastContactAt: Date;
 
   @OneToMany('Activity', 'lead')
-  activities: any[];
+  activities: Relation<Activity[]>;
 
   @OneToMany('Email', 'lead')
-  emails: any[];
+  emails: Relation<Email[]>;
 
   @OneToMany('Call', 'lead')
-  calls: any[];
+  calls: Relation<Call[]>;
 
   @OneToMany('Assessment', 'lead')
-  assessments: any[];
+  assessments: Relation<Assessment[]>;
 
   @CreateDateColumn()
   createdAt: Date;

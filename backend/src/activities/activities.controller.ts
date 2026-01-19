@@ -12,6 +12,10 @@ import { ActivitiesService } from './activities.service';
 import { CreateNoteDto } from './dto/create-activity.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+interface RequestWithUser {
+  user?: { id: string };
+}
+
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class ActivitiesController {
@@ -34,9 +38,9 @@ export class ActivitiesController {
   addNote(
     @Param('leadId') leadId: string,
     @Body() dto: CreateNoteDto,
-    @Request() req: any,
+    @Request() req: RequestWithUser,
   ) {
-    return this.activitiesService.addNote(leadId, dto, req.user?.id);
+    return this.activitiesService.addNote(leadId, dto, req.user?.id ?? '');
   }
 
   /**

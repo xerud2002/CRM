@@ -59,8 +59,8 @@ export abstract class BaseEmailParser {
   protected parseDate(text: string): Date | undefined {
     // Try various date formats
     const datePatterns = [
-      /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/, // DD/MM/YYYY or DD-MM-YYYY
-      /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/, // YYYY/MM/DD or YYYY-MM-DD
+      /(\d{1,2})[/-](\d{1,2})[/-](\d{4})/, // DD/MM/YYYY or DD-MM-YYYY
+      /(\d{4})[/-](\d{1,2})[/-](\d{1,2})/, // YYYY/MM/DD or YYYY-MM-DD
       /(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i,
     ];
 
@@ -70,7 +70,9 @@ export abstract class BaseEmailParser {
         try {
           const date = new Date(match[0]);
           if (!isNaN(date.getTime())) return date;
-        } catch {}
+        } catch (_e) {
+          // Date parsing failed, continue to next pattern
+        }
       }
     }
     return undefined;

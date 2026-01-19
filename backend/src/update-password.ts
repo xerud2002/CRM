@@ -28,10 +28,10 @@ async function updatePassword() {
     console.log(`✅ Password updated for ${email}`);
     console.log(`   New password: ${newPassword}`);
   } catch (error) {
-    console.error('Error:', error.message);
+    console.error('Error:', (error as Error).message);
   }
 
   await app.close();
 }
 
-updatePassword();
+void updatePassword();

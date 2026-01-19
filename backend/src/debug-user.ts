@@ -2,10 +2,11 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { Repository } from 'typeorm';
 
 async function deb() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  const repository = app.get(getRepositoryToken(User));
+  const repository = app.get<Repository<User>>(getRepositoryToken(User));
 
   const user = await repository.findOne({
     where: { email: 'alex.burcea@holdemremovals.co.uk' },
@@ -26,4 +27,4 @@ async function deb() {
   await app.close();
 }
 
-deb();
+void deb();

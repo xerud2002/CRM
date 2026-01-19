@@ -19,13 +19,17 @@ import {
 } from './dto';
 import { AssessmentType } from '../entities';
 
+interface RequestWithUser {
+  user: { id: string };
+}
+
 @Controller('assessments')
 @UseGuards(JwtAuthGuard)
 export class AssessmentsController {
   constructor(private readonly assessmentsService: AssessmentsService) {}
 
   @Post()
-  create(@Body() dto: CreateAssessmentDto, @Request() req) {
+  create(@Body() dto: CreateAssessmentDto, @Request() req: RequestWithUser) {
     return this.assessmentsService.create(dto, req.user.id);
   }
 
@@ -62,7 +66,7 @@ export class AssessmentsController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateAssessmentDto,
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.assessmentsService.update(id, dto, req.user.id);
   }
@@ -71,7 +75,7 @@ export class AssessmentsController {
   complete(
     @Param('id') id: string,
     @Body('outcome') outcome: string,
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.assessmentsService.completeAssessment(id, outcome, req.user.id);
   }
@@ -80,7 +84,7 @@ export class AssessmentsController {
   cancel(
     @Param('id') id: string,
     @Body('reason') reason: string,
-    @Request() req,
+    @Request() req: RequestWithUser,
   ) {
     return this.assessmentsService.cancelAssessment(id, reason, req.user.id);
   }

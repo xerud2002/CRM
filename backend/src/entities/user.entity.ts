@@ -5,7 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  type Relation,
 } from 'typeorm';
+import type { Lead } from './lead.entity';
+import type { Activity } from './activity.entity';
+import type { Assessment } from './assessment.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -37,13 +41,13 @@ export class User {
   isActive: boolean;
 
   @OneToMany('Lead', 'assignedTo')
-  leads: any[];
+  leads: Relation<Lead[]>;
 
   @OneToMany('Activity', 'user')
-  activities: any[];
+  activities: Relation<Activity[]>;
 
   @OneToMany('Assessment', 'assignedTo')
-  assessments: any[];
+  assessments: Relation<Assessment[]>;
 
   @CreateDateColumn()
   createdAt: Date;

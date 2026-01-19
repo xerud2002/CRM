@@ -184,7 +184,9 @@ export class DashboardService {
       .createQueryBuilder('assessment')
       .select('COUNT(DISTINCT assessment.leadId)', 'count')
       .getRawOne()
-      .then((r) => parseInt(r.count, 10));
+      .then((r: { count: string } | undefined) =>
+        parseInt(r?.count ?? '0', 10),
+      );
 
     // Leads with completed assessment
     const surveyCompleted = await this.assessmentRepository
@@ -194,7 +196,9 @@ export class DashboardService {
         status: AssessmentStatus.COMPLETED,
       })
       .getRawOne()
-      .then((r) => parseInt(r.count, 10));
+      .then((r: { count: string } | undefined) =>
+        parseInt(r?.count ?? '0', 10),
+      );
 
     // Leads with quote amount set
     const quoteSent = await leadQuery
@@ -247,7 +251,10 @@ export class DashboardService {
     };
   }
 
-  private applyFilters(query: any, filter: DashboardFilterDto) {
+  private applyFilters(
+    query: ReturnType<typeof this.leadRepository.createQueryBuilder>,
+    filter: DashboardFilterDto,
+  ): ReturnType<typeof this.leadRepository.createQueryBuilder> {
     // Exclude pending and rejected
     query.andWhere('lead.status NOT IN (:...excludeStatuses)', {
       excludeStatuses: [LeadStatus.PENDING, LeadStatus.REJECTED],

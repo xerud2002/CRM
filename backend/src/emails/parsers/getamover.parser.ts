@@ -12,7 +12,7 @@ import { LeadSource } from '../../entities';
  * Format: HTML email
  */
 export class GetAMoverParser extends BaseEmailParser {
-  canParse(from: string, subject: string): boolean {
+  canParse(from: string, _subject: string): boolean {
     return from.toLowerCase().includes('getamover.co.uk');
   }
 

@@ -55,7 +55,10 @@ async function bootstrap() {
       await leadsService.create(lead);
       console.log(`Created lead: ${lead.firstName} ${lead.lastName}`);
     } catch (e) {
-      console.error(`Error creating lead ${lead.firstName}:`, (e as Error).message);
+      console.error(
+        `Error creating lead ${lead.firstName}:`,
+        (e as Error).message,
+      );
     }
   }
 

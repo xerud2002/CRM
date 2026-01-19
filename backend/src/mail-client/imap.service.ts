@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EmailAccount, Email, EmailDirection, Lead } from '../entities';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-assignment
 const Imap = require('imap-simple');
 import { simpleParser, Source } from 'mailparser';
 
@@ -62,13 +62,14 @@ export class ImapService {
       },
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let connection: any = null;
+    let connection: unknown = null;
     const savedEmails: Email[] = [];
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       connection = await Imap.connect(config);
-      await connection.openBox(folder);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      await (connection as any).openBox(folder);
 
       // Search for recent emails (last 7 days or since last sync)
       const searchDate = account.lastSyncAt
@@ -81,7 +82,8 @@ export class ImapService {
         markSeen: false,
       };
 
-      const messages: ImapMessage[] = await connection.search(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+      const messages: ImapMessage[] = await (connection as any).search(
         searchCriteria,
         fetchOptions,
       );
@@ -141,12 +143,13 @@ export class ImapService {
           savedEmails.push(saved);
         } catch (parseError) {
           this.logger.error(
-            `Error parsing message: ${(parseError as Error).message}`,
+            `Error parsing message: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
           );
         }
       }
 
       // Update last sync time
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       account.lastSyncAt = new Date();
       await this.accountRepository.save(account);
 
@@ -158,7 +161,8 @@ export class ImapService {
       throw error;
     } finally {
       if (connection) {
-        connection.end();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+        (connection as any).end();
       }
     }
 
@@ -183,15 +187,15 @@ export class ImapService {
     };
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const connection: any = await Imap.connect(config);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const connection = await Imap.connect(config);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const boxes: Record<string, unknown> = await connection.getBoxes();
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       connection.end();
       return Object.keys(boxes);
     } catch (error) {
-      this.logger.error(
-        `Error getting folders: ${(error as Error).message}`,
-      );
+      this.logger.error(`Error getting folders: ${(error as Error).message}`);
       return ['INBOX', 'Sent', 'Trash', 'Drafts'];
     }
   }

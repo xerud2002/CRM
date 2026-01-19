@@ -6,8 +6,10 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
+  type Relation,
 } from 'typeorm';
 import { Lead } from './lead.entity';
+import type { EmailTemplate } from './email-template.entity';
 
 export enum EmailDirection {
   INBOUND = 'inbound',
@@ -32,7 +34,7 @@ export class Email {
 
   @ManyToOne('EmailTemplate', { nullable: true })
   @JoinColumn({ name: 'template_id' })
-  template: any;
+  template: Relation<EmailTemplate>;
 
   @Column({ name: 'template_id', nullable: true })
   templateId: string;

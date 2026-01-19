@@ -5,12 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Lead,
-  LeadStatus,
-  Activity,
-  ActivityType,
-} from '../entities';
+import { Lead, LeadStatus, Activity, ActivityType } from '../entities';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadFilterDto } from './dto/lead-filter.dto';

@@ -26,7 +26,7 @@ export class LeadFilterDto {
   source?: LeadSource;
 
   @IsOptional()
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.split(',') : value,
   )
   @IsArray()

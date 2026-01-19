@@ -16,6 +16,10 @@ import { UpdateLeadDto } from './dto/update-lead.dto';
 import { LeadFilterDto } from './dto/lead-filter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+interface RequestWithUser {
+  user?: { id: string };
+}
+
 @Controller('leads')
 @UseGuards(JwtAuthGuard)
 export class LeadsController {
@@ -42,7 +46,10 @@ export class LeadsController {
   }
 
   @Post()
-  create(@Body() createLeadDto: CreateLeadDto, @Request() req: any) {
+  create(
+    @Body() createLeadDto: CreateLeadDto,
+    @Request() req: RequestWithUser,
+  ) {
     return this.leadsService.create(createLeadDto, req.user?.id);
   }
 
@@ -50,18 +57,18 @@ export class LeadsController {
   update(
     @Param('id') id: string,
     @Body() updateLeadDto: UpdateLeadDto,
-    @Request() req: any,
+    @Request() req: RequestWithUser,
   ) {
     return this.leadsService.update(id, updateLeadDto, req.user?.id);
   }
 
   @Post(':id/accept')
-  accept(@Param('id') id: string, @Request() req: any) {
+  accept(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.leadsService.accept(id, req.user?.id);
   }
 
   @Post(':id/reject')
-  reject(@Param('id') id: string, @Request() req: any) {
+  reject(@Param('id') id: string, @Request() req: RequestWithUser) {
     return this.leadsService.reject(id, req.user?.id);
   }
 
